@@ -14,11 +14,11 @@ FRED = {"hpi": ("CSUSHPINSA", "2004-01-01", False), "mort": ("MORTGAGE30US", "20
 START = 1162339200  # 2006-11-01
 
 
-def get(url, tries=3):
+def get(url, tries=2):
     last = None
     for i in range(tries):
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=40) as r:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=20) as r:
                 return r.read().decode("utf-8")
         except Exception as e:  # noqa: BLE001
             last = e
@@ -79,16 +79,20 @@ def main():
     for key, sym in ASSETS.items():
         try:
             data["assets"][key] = yahoo(sym)
+            print("ok", key, flush=True)
         except Exception as e:  # noqa: BLE001
             data["errors"].append(f"{key}: {e}")
+            print("FAIL", key, repr(e), flush=True)
             if key in prev.get("assets", {}):
                 data["assets"][key] = prev["assets"][key]
         time.sleep(1)
     for key, (sid, start, monthly) in FRED.items():
         try:
             data["fred"][key] = fred(sid, start, monthly)
+            print("ok", key, flush=True)
         except Exception as e:  # noqa: BLE001
             data["errors"].append(f"{key}: {e}")
+            print("FAIL", key, repr(e), flush=True)
             if key in prev.get("fred", {}):
                 data["fred"][key] = prev["fred"][key]
     os.makedirs("site", exist_ok=True)

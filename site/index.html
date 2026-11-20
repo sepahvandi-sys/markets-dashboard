@@ -84,6 +84,10 @@ svg{direction:ltr}
 .bar{height:6px;border-radius:3px;background:var(--line);position:relative;direction:ltr}
 .bar b{position:absolute;top:-3px;width:4px;height:12px;border-radius:2px;background:var(--gold)}
 .foot{color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+.step{display:inline-flex;gap:6px;align-items:baseline;border:1px solid var(--line);border-radius:8px;padding:1px 8px;margin:2px 0 2px 4px;background:var(--bg)}
+.step b{font-size:12px} .step.b b{color:var(--up)} .step.s b{color:var(--down)}
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.plan td,.plan th{white-space:normal} .plan td:first-child,.plan td:nth-child(2),.plan td:nth-child(3){white-space:nowrap}
 .skel{color:var(--muted);padding:24px;text-align:center}
 @media (prefers-reduced-motion:no-preference){.fade{animation:f .35s ease-out}@keyframes f{from{opacity:.4}to{opacity:1}}}
 </style>
@@ -123,6 +127,10 @@ svg{direction:ltr}
     </div>
     <div class="card" id="fresh"><div class="skel">سیگنال‌ها پس از رسیدن تاریخچه ۲۰ ساله محاسبه می‌شوند…</div></div>
     <div class="scroll"><table id="sigmx"></table></div>
+    <div class="sec-head"><h3>نقشه خرید و فروش پله‌ای</h3><span class="sub">سطح قیمت هر پله و سهم پیشنهادی آن · روی هر بازار بزنید تا پشتوانه هر سطح را ببینید</span></div>
+    <div class="scroll"><table id="ladmx"></table></div>
+    <div id="laddet"></div>
+    <div class="sub">درصد خرید یعنی سهمی از پولی که برای همان بازار کنار گذاشته‌اید و درصد فروش یعنی سهمی از موجودی فعلی‌تان در همان بازار. سطح‌ها از کف و سقف‌های سه افق زمانی، میانگین‌های ۵۰ و ۲۰۰ روزه، مرز سیگنال بلندمدت و اصلاح‌های دامنه یک‌ساله ساخته می‌شوند و سطح‌های نزدیک به هم یکی می‌شوند. سهم هر پله به قوت سطح، جهت سیگنال‌های میان‌مدت و بلندمدت و شرایط نرخ بهره و تورم بستگی دارد: در روند صعودی خرید بیشتر در پله‌های نزدیک و فروش کم؛ در روند نزولی خرید کمتر و در پله‌های عمیق‌تر و فروش بیشتر در رشدها. «احتمال رسیدن» سهم روزهایی در ۲۰ سال گذشته است که با همین وضعیت روند میان‌مدت، قیمت ظرف حدود سه ماه همین‌قدر جابه‌جا شده است. این نقشه یک روش قاعده‌مند است، نه توصیه شخصی سرمایه‌گذاری؛ اندازه کل سرمایه هر بازار را خودتان با توجه به ریسک‌پذیری‌تان تعیین کنید.</div>
     <div class="card" style="min-width:0">
       <div class="sec-head"><h3>کارنامه ۲۰ ساله هر سیگنال</h3>
         <div class="tabs" id="b-tabs"><button class="tab" type="button" data-h="short" aria-pressed="false">کوتاه‌مدت</button><button class="tab" type="button" data-h="medium" aria-pressed="true">میان‌مدت</button><button class="tab" type="button" data-h="long" aria-pressed="false">بلندمدت</button></div></div>
@@ -221,7 +229,7 @@ const ASSETS = [
 const BYID = Object.fromEntries(ASSETS.map(a=>[a.id,a]));
 const HZ = {short:"کوتاه‌مدت", medium:"میان‌مدت", long:"بلندمدت"};
 const HZ_DESC = {short:"چند روز تا چند هفته · نمودار روزانه ۴ ماه اخیر", medium:"چند هفته تا چند ماه · نمودار روزانه یک سال", long:"چند ماه تا چند سال · نمودار هفتگی ۵ سال"};
-const S = {daily:{}, weekly:{}, hist:{}, full:{}, macro:{}, btH:"medium", house:{}, errs:{}, stamps:{}, asset:"gold", hz:"medium", corrW:60};
+const S = {daily:{}, weekly:{}, hist:{}, full:{}, macro:{}, btH:"medium", ladA:"gold", house:{}, errs:{}, stamps:{}, asset:"gold", hz:"medium", corrW:60};
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -408,9 +416,78 @@ function signal(id,h){
     const now=S.full[id][S.full[id].length-1].c;
     const verdict = best.IS.mar>best.IS.marb && OOS.mar>OOS.marb ? 2 : ALL.mar>ALL.marb ? 1 : 0;
     out={id,h,rule:best.rule,state:st[n-1],since:ser[j].d,at:ser[j].c,chg:(now/ser[j].c-1)*100,age:n-1-j,fresh:n-1-j<=FRESH[h],
-      gap: h==="long"? now/best.sl[n-1]-1 : best.fa[n-1]/best.sl[n-1]-1, IS:best.IS,OOS,ALL,verdict,from:ser[a].d};
+      gap: h==="long"? now/best.sl[n-1]-1 : best.fa[n-1]/best.sl[n-1]-1, IS:best.IS,OOS,ALL,verdict,from:ser[a].d,st,line:best.sl[n-1]};
     out.near=Math.abs(out.gap)<NEAR[h]; }
   memo.set(key,out); return out;
+}
+
+/* ---------- staged buy/sell plan: price levels and the share to trade at each ---------- */
+const SRCW={short:1, medium:1.5, long:2};
+const fwdMemo=new Map();
+function fwdMoves(id){ const f=S.full[id], n=f.length, key=id+n; if(fwdMemo.has(key)) return fwdMemo.get(key);
+  const H=BYID[id].crypto?90:63, lo=new Float64Array(n), hi=new Float64Array(n);
+  for(let i=0;i<n-H;i++){ let a=Infinity,b=-Infinity; for(let j=i+1;j<=i+H;j++){ const v=f[j].c; if(v<a)a=v; if(v>b)b=v; } lo[i]=a/f[i].c; hi[i]=b/f[i].c; }
+  const o={H,lo,hi}; fwdMemo.set(key,o); return o; }
+function reachProb(id,ratio,st){ const f=S.full[id], n=f.length, {H,lo,hi}=fwdMoves(id), now=st? st[n-1]:null; let hit=0,tot=0;
+  for(let i=260;i<n-H;i++){ if(st && st[i]!==now) continue; tot++; if(ratio<1? lo[i]<=ratio : hi[i]>=ratio) hit++; }
+  return tot>=150? hit/tot*100 : null; }
+function zones(cand,price,dir,minGap,maxDist,skip){
+  const c=cand.filter(x=> dir<0? x.p<price-skip && x.p>=price*(1-maxDist) : x.p>price+skip && x.p<=price*(1+maxDist)).sort((x,y)=>dir<0? y.p-x.p : x.p-y.p);
+  const out=[]; for(const x of c){ const z=out[out.length-1];
+    if(z && Math.abs(x.p-z.anchor)<=minGap){ z.level=(z.level*z.w+x.p*x.w)/(z.w+x.w); z.w+=x.w; if(!z.src.includes(x.src)) z.src.push(x.src); }
+    else out.push({anchor:x.p,level:x.p,w:x.w,src:[x.src]}); }
+  return out.slice(0,4); }
+function allocate(z,total,tilt){ if(!z.length) return; const raw=z.map((x,i)=>Math.sqrt(Math.min(x.w,5))*tilt[i]), sum=raw.reduce((a,b)=>a+b,0);
+  z.forEach((x,i)=>x.pct=Math.max(5,Math.round(total*raw[i]/sum/5)*5)); let d=total-z.reduce((a,x)=>a+x.pct,0);
+  const order=z.map((_,i)=>i).sort((i,j)=>raw[j]-raw[i]); let k=0; while(d!==0 && k<40){ const x=z[order[k%z.length]]; const step=d>0?5:-5; if(x.pct+step>=5){ x.pct+=step; d-=step; } k++; } }
+const planMemo=new Map();
+function plan(id,wind){
+  const f=S.full[id]; if(!f||!S.hist[id]) return null; const n=f.length, key=id+n+f[n-1].c+(wind?wind.w:"x"); if(planMemo.has(key)) return planMemo.get(key);
+  const A={short:analyze(id,"short"),medium:analyze(id,"medium"),long:analyze(id,"long")}; if(!A.medium){ return null; }
+  const price=A.medium.price, a=A.medium.atr, cr=!!BYID[id].crypto; const cand=[], ext=[];
+  const add=(arr,p,w,src)=>{ if(p!=null&&isFinite(p)&&p>0) arr.push({p,w,src}); };
+  for(const h of ["short","medium","long"]){ const X=A[h]; if(!X) continue; const tw=s=>SRCW[h]*(1+Math.min(s.touches-1,3)*0.25);
+    X.sup.forEach(s=>add(cand,s.level,tw(s),"کف "+HZ[h])); X.res.forEach(s=>add(cand,s.level,tw(s),"سقف "+HZ[h])); }
+  add(cand,A.medium.M1,1.2,"میانگین ۵۰ روزه"); add(cand,A.medium.M2,1.8,"میانگین ۲۰۰ روزه");
+  const gl=signal(id,"long"), gm=signal(id,"medium");
+  if(gl) add(cand,gl.line,2,`میانگین ${gl.rule[1]} ماهه`);
+  const hi=A.medium.hi, lo=A.medium.lo, R=hi-lo;
+  [[0.382,"۳۸"],[0.5,"۵۰"],[0.618,"۶۲"]].forEach(([k,t])=>add(cand,hi-R*k,0.7,`اصلاح ${t}٪ دامنه یک‌ساله`));
+  add(cand,Math.max(...f.map(x=>x.h)),2.5,"سقف ۲۰ ساله");
+  [[0.272,"۲۷"],[0.618,"۶۲"],[1,"۱۰۰"]].forEach(([k,t])=>add(ext,hi+R*k,0.6,`هدف محاسباتی (${t}٪ دامنه یک‌ساله بالای سقف)`));
+  const minGap=Math.max(a*2,price*(cr?0.04:0.02)), skip=a*0.3;
+  const buys=zones(cand,price,-1,minGap,cr?0.55:0.30,skip);
+  let sells=zones(cand,price,1,minGap,cr?0.8:0.35,skip); if(sells.length<3) sells=zones(cand.concat(ext),price,1,minGap,cr?0.8:0.35,skip);
+  const sg=g=> !g?0 : (g.state?1:-1)*(g.verdict?1:0.5);
+  const C=2*sg(gl)+sg(gm)+(wind?wind.w:0), stance= C>=2?1 : C<=-2?-1 : 0;
+  const buyTot=[40,70,100][stance+1], sellTot=[75,50,30][stance+1];
+  allocate(buys,buyTot, stance>0?[1.3,1,0.8,0.6] : stance<0?[0.5,0.8,1.1,1.4] : [1,1,1,1]);
+  allocate(sells,sellTot, stance>0?[0.6,0.9,1.2,1.4] : stance<0?[1.4,1.1,0.8,0.6] : [1,1,1,1]);
+  const st=gm? gm.st:null; [...buys,...sells].forEach(z=>{ z.dist=(z.level/price-1)*100; z.prob=reachProb(id,z.level/price,st); });
+  const out={id,price,stance,buys,sells,buyTot:buys.reduce((s,x)=>s+x.pct,0),sellTot:sells.reduce((s,x)=>s+x.pct,0),gl,gm,months:BYID[id].crypto?3:3};
+  planMemo.set(key,out); return out;
+}
+const STANCE={"1":'<span class="pill p-up">خرید در اصلاح</span>',"0":'<span class="pill p-flat">خنثی و محتاط</span>',"-1":'<span class="pill p-down">فروش در رشد</span>'};
+function renderPlan(TR,mst){
+  const P={}; TR.forEach(a=>P[a.id]=plan(a.id,macroWind(a.id,mst)));
+  const steps=(z,c)=> z.length? z.map(x=>`<span class="step ${c}">${fmt(x.level)} <b class="num">${x.pct}%</b></span>`).join("") : '<span class="muted">سطح مشخصی در این فاصله نیست</span>';
+  $("ladmx").innerHTML=`<thead><tr><th>بازار</th><th>قیمت فعلی</th><th>رویکرد</th><th>پله‌های خرید (قیمت · سهم از پول کنار گذاشته)</th><th>پله‌های فروش (قیمت · سهم از موجودی)</th></tr></thead><tbody>`+
+    TR.map(a=>{const p=P[a.id]; if(!p) return `<tr><td class="name">${a.fa}</td><td colspan="4" class="muted">تاریخچه کافی نیست</td></tr>`;
+      return `<tr class="row ${S.ladA===a.id?"sel":""}" tabindex="0" data-id="${a.id}"><td class="name">${a.fa}</td><td>${fmt(p.price)}</td><td>${STANCE[p.stance]}</td><td style="white-space:normal;min-width:230px">${steps(p.buys,"b")}</td><td style="white-space:normal;min-width:230px">${steps(p.sells,"s")}</td></tr>`;}).join("")+"</tbody>";
+  $("ladmx").querySelectorAll("tr.row").forEach(tr=>{ const go=()=>{S.ladA=tr.dataset.id;renderSignals();}; tr.onclick=go; tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}}; });
+  const p=P[S.ladA]||Object.values(P).find(Boolean); if(!p){ $("laddet").innerHTML=""; return; } const a=BYID[p.id];
+  const tbl=(z,buy)=> !z.length? `<div class="sub">در این فاصله سطح مشخصی پیدا نشد.</div>` :
+    `<table><thead><tr><th>پله</th><th>قیمت</th><th>فاصله</th><th>${buy?"سهم خرید":"سهم فروش"}</th><th>احتمال رسیدن در ۳ ماه</th><th>پشتوانه سطح</th></tr></thead><tbody>`+
+    z.map((x,i)=>`<tr><td><span class="num">${i+1}</span></td><td><strong>${fmt(x.level)}</strong></td><td>${pct(x.dist)}</td><td><span class="num ${buy?"up":"down"}"><strong>${x.pct}%</strong></span></td><td>${x.prob==null?"—":`<span class="num">${Math.round(x.prob)}%</span>`}</td><td class="sub" style="min-width:170px">${x.src.slice(0,4).join(" · ")}${x.src.length>4?" و "+(x.src.length-4)+" سطح دیگر":""}</td></tr>`).join("")+"</tbody></table>";
+  const g=p.gl; let rule="";
+  if(g) rule = g.state? `مرز ابطال: سیگنال بلندمدت فعلاً خرید است. اگر قیمت در پایان ماه زیر حدود ${fmt(g.line)} بسته شود، این سیگنال فروش می‌شود؛ در آن صورت پله‌های خرید باقی‌مانده را متوقف کنید و فروش را جلو بیندازید.`
+                       : `مرز تأیید: سیگنال بلندمدت فعلاً فروش است. اگر قیمت در پایان ماه بالای حدود ${fmt(g.line)} بسته شود، این سیگنال خرید می‌شود؛ تا آن زمان ${100-p.buyTot}٪ از پول این بازار نقد بماند.`;
+  const why = p.stance>0? "سیگنال‌های روند و شرایط کلان در مجموع موافق‌اند؛ پس خریدها در اصلاح‌های نزدیک سنگین‌تر و فروش‌ها کم و در سطوح بالاتر چیده شده‌اند." : p.stance<0? "سیگنال‌های روند و شرایط کلان در مجموع مخالف‌اند؛ پس خرید محدود و در سطوح عمیق‌تر است و بخش بیشتری از موجودی در رشدها فروخته می‌شود." : "سیگنال‌ها هم‌جهت نیستند؛ پس خرید و فروش هر دو میانه است و سهم هر پله فقط به قوت همان سطح بستگی دارد.";
+  $("laddet").innerHTML=`<div class="card fade"><div class="sec-head"><h3>${a.fa} · قیمت فعلی ${fmt(p.price)}</h3>${STANCE[p.stance]}</div>
+    <div class="sub">${why}</div>
+    <div class="plan"><div><div class="kv"><span>پله‌های خرید</span><span>جمع: <span class="num up">${p.buyTot}%</span> از پول این بازار</span></div><div class="scroll" style="border:none">${tbl(p.buys,true)}</div></div>
+    <div><div class="kv"><span>پله‌های فروش</span><span>جمع: <span class="num down">${p.sellTot}%</span> از موجودی</span></div><div class="scroll" style="border:none">${tbl(p.sells,false)}</div></div></div>
+    ${rule?`<div class="sig nt">${rule}</div>`:""}</div>`;
 }
 const VERD=['<span class="pill p-down">ضعیف</span>','<span class="pill p-flat">متوسط</span>','<span class="pill p-up">معتبر</span>'];
 const sigPill=g=> `<span class="pill ${g.state?"p-up":"p-down"}" style="${g.verdict?"":"opacity:.55"}">${g.state?"خرید":"فروش"}</span>`;
@@ -429,6 +506,7 @@ function renderSignals(){
   $("btest").innerHTML=`<thead><tr><th>بازار</th><th>قاعده</th><th>از سال</th><th>معامله</th><th>موفق</th><th>بازده سالانه: سیگنال / نگهداری</th><th>بیشترین افت: سیگنال / نگهداری</th><th>۳۰٪ آخر: سیگنال / نگهداری</th><th>اعتبار</th></tr></thead><tbody>`+
     TR.map(a=>{const g=G[a.id][h]; if(!g) return `<tr><td class="name">${a.fa}</td><td colspan="8" class="muted">تاریخچه کافی نیست</td></tr>`;
       return `<tr><td class="name">${a.fa}</td><td>${ruleName(h,g.rule)}</td><td><span class="num">${g.from.slice(0,4)}</span></td><td><span class="num">${g.ALL.n}</span></td><td><span class="num">${Math.round(g.ALL.win)}%</span></td><td>${two(g.ALL.cagr,g.ALL.bh)}</td><td>${two(g.ALL.dd,g.ALL.ddb)}</td><td>${two(g.OOS.cagr,g.OOS.bh)}</td><td>${VERD[g.verdict]}</td></tr>`;}).join("")+"</tbody>";
+  renderPlan(TR,mst);
   $("b-tabs").querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",S.btH===b.dataset.h); b.onclick=()=>{S.btH=b.dataset.h; renderSignals();};});
 }
 /* ---------- Fed and inflation ---------- */
