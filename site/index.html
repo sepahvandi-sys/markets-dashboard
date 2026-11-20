@@ -176,7 +176,7 @@ svg{direction:ltr}
     </div>
     <div class="chartbox" style="align-self:stretch"><div id="cychart"><div class="skel">نمودار موجی پس از رسیدن تاریخچه ساخته می‌شود…</div></div><div class="legend" id="cyleg"></div></div>
     <div class="scroll"><table id="cytab"></table></div>
-    <div class="sub">هر خط نشان می‌دهد قیمت آن بازار چقدر از میانگین یک‌ساله خودش بالاتر یا پایین‌تر است؛ برای اینکه چهار بازار با هم قابل مقایسه باشند، فاصله با نوسان معمول همان بازار هم‌مقیاس شده است (۲+ یعنی خیلی بالاتر از حد معمول، ۲- یعنی خیلی پایین‌تر). خط‌چین بلند، موج سینوسی‌ای است که بهترین تطابق را با بازار انتخاب‌شده دارد. در ناحیه خاکستری سمت راست، نقطه‌چین هر بازار مسیر تخمینی ماه‌های آینده را بر اساس موج همان بازار نشان می‌دهد. «قیمت اوراق» از بازده اوراق ۱۰ ساله خزانه آمریکا با دیرش حدود ۸٫۵ سال برآورد شده و وارون بازده حرکت می‌کند. بازارها ساعت دقیق نیستند: هرجا «تطابق موج» پایین است، زمان قله و کف بعدی را جدی نگیرید.</div>
+    <div class="sub">هر خط نشان می‌دهد قیمت آن بازار چقدر از میانگین یک‌ساله خودش بالاتر یا پایین‌تر است؛ برای اینکه چهار بازار با هم قابل مقایسه باشند، فاصله با نوسان معمول همان بازار هم‌مقیاس شده است (۲+ یعنی خیلی بالاتر از حد معمول، ۲- یعنی خیلی پایین‌تر). خط‌چین بلند، موج سینوسی‌ای است که بهترین تطابق را با بازار انتخاب‌شده دارد. در ناحیه خاکستری سمت راست، نقطه‌چین هر بازار مسیر تخمینی ماه‌های آینده را بر اساس موج همان بازار نشان می‌دهد. «قیمت اوراق» از بازده اوراق ۱۰ ساله خزانه آمریکا با دیرش حدود ۸٫۵ سال برآورد شده و وارون بازده حرکت می‌کند. عددهای سمت چپ نمودار، قیمت بازار انتخاب‌شده در هر سطح موج است (با میانگین یک‌ساله امروز) و عدد رنگی انتهای هر نقطه‌چین، قیمت تخمینی همان بازار در پایان مسیر است. بازارها ساعت دقیق نیستند: هرجا «تطابق موج» پایین است، زمان قله و کف بعدی را جدی نگیرید.</div>
   </section>
 
   <section id="s-links">
@@ -439,7 +439,10 @@ function cycSeries(id){ const w=S.weekly[id==="bond"?"tnx":id]; if(!w||w.length<
 function wave(id,weeks){ const s=cycSeries(id); if(!s) return null; const c=s.map(x=>x.c), m=sma(c,52); const d=[],dev=[];
   for(let i=Math.max(51,c.length-weeks);i<c.length;i++){ d.push(s[i].d); dev.push(Math.log(c[i]/m[i])); }
   if(dev.length<60) return null; const sd=Math.sqrt(dev.reduce((a,v)=>a+v*v,0)/dev.length)||1;
-  return {d,dev,z:dev.map(v=>v/sd),fit:sineFit(dev.map(v=>v/sd))}; }
+  const bond=id==="bond", tn=S.weekly.tnx;
+  return {d,dev,sd,bond,avg:bond?null:m[m.length-1],px:bond? tn[tn.length-1].c : c[c.length-1],z:dev.map(v=>v/sd),fit:sineFit(dev.map(v=>v/sd))}; }
+const pnum=v=>(+v.toPrecision(4)).toLocaleString("en-US");
+const zPrice=(w,z)=> w.bond? null : w.avg*Math.exp(z*w.sd);
 function sineFit(z){ const n=z.length, mean=z.reduce((a,b)=>a+b,0)/n; let sst=0; z.forEach(v=>sst+=(v-mean)**2); let best=null;
   for(let P=26;P<=Math.min(n*0.8,260);P++){ const k=2*Math.PI/P; let ss=0,cc=0,sc=0,ys=0,yc=0,ms=0,mc=0;
     for(let t=0;t<n;t++){ ms+=Math.sin(k*t); mc+=Math.cos(k*t); } ms/=n; mc/=n;
@@ -455,10 +458,10 @@ function renderCycle(){
   $("cy-tabs").querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",S.cyW==b.dataset.w); b.onclick=()=>{S.cyW=+b.dataset.w; renderCycle();};});
   if(!ok.length){ $("cytab").innerHTML=""; $("cyleg").innerHTML=""; return; }
   if(!Wv[S.cyA]) S.cyA=ok[0][0];
-  const base=Wv[S.cyA], n=base.d.length, F=Math.max(26,Math.round(n*0.14)), W=1100,H=380,pl=8,pr=44,pt=14,pb=26, R=3.2;
+  const base=Wv[S.cyA], n=base.d.length, F=Math.max(26,Math.round(n*0.14)), W=1100,H=400,pl=66,pr=78,pt=14,pb=26, R=3.2;
   const X=i=>pl+(W-pl-pr)*i/(n-1+F), Y=v=>pt+(H-pt-pb)*(1-(Math.max(-R,Math.min(R,v))+R)/(2*R));
-  let g="";
-  for(let v=-3;v<=3;v++){ const y=Y(v); g+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="${v?1:1.6}"/><text x="${W-pr+6}" y="${y+4}" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${v>0?"+":""}${v}</text>`; }
+  let g=""; const selCol=CYC.find(x=>x[0]===S.cyA)[2], tags=[];
+  for(let v=-3;v<=3;v++){ const y=Y(v); g+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="${v?1:1.6}"/><text x="${pl+4}" y="${y-3}" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${v>0?"+":""}${v}</text>`+(base.bond?"":`<text x="${pl-6}" y="${y+4}" text-anchor="end" font-size="11" fill="${selCol}" font-family="IBM Plex Mono,monospace">${pnum(zPrice(base,v))}</text>`); }
   let yr=""; base.d.forEach((d,i)=>{ const y=d.slice(0,4); if(y!==yr){ if(yr) g+=`<line x1="${X(i)}" x2="${X(i)}" y1="${pt}" y2="${H-pb}" stroke="var(--line)" stroke-dasharray="2 4"/><text x="${X(i)+4}" y="${H-8}" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${y}</text>`; yr=y; } });
   g+=`<rect x="${X(n-1)}" width="${X(n-1+F)-X(n-1)}" y="${pt}" height="${H-pt-pb}" fill="var(--muted)" opacity="0.10"/><line x1="${X(n-1)}" x2="${X(n-1)}" y1="${pt}" y2="${H-pb}" stroke="var(--ink)" stroke-width="1" opacity="0.5"/><text x="${X(n-1)+6}" y="${pt+14}" font-size="11" fill="var(--muted)" font-family="Vazirmatn,sans-serif">آینده</text>`;
   const line=(z,off)=>z.map((v,i)=>(i?"L":"M")+X(i+off).toFixed(1)+","+Y(v).toFixed(1)).join("");
@@ -468,15 +471,16 @@ function renderCycle(){
   // projection into the next 6 months for every market: starts at the last real value and follows the fitted wave's shape
   ok.forEach(([id,,col])=>{ const w=Wv[id], f=w.fit; if(!f) return; const m=w.z.length, z0=w.z[m-1], sh=z0-f.f(m-1), on=id===S.cyA; const pts=[];
     for(let t=0;t<=F;t++) pts.push(f.f(m-1+t)+sh*(1-t/F));
-    g+=`<path d="${line(pts,n-1)}" fill="none" stroke="${col}" stroke-width="${on?3:2}" stroke-dasharray="${on?"3 6":"2 6"}" stroke-linecap="round" opacity="${on?1:0.75}"/><circle cx="${X(n-1+F)}" cy="${Y(pts[F])}" r="${on?4:3}" fill="${col}"/>`; });
+    g+=`<path d="${line(pts,n-1)}" fill="none" stroke="${col}" stroke-width="${on?3:2}" stroke-dasharray="${on?"3 6":"2 6"}" stroke-linecap="round" opacity="${on?1:0.75}"/><circle cx="${X(n-1+F)}" cy="${Y(pts[F])}" r="${on?4:3}" fill="${col}"/>`; w.projZ=pts[F]; w.projD=addWeeks(w.d[m-1],F); tags.push({y:Y(pts[F]),col,t:w.bond?"":pnum(zPrice(w,pts[F]))}); });
+  tags.sort((a,b)=>a.y-b.y); tags.forEach((t,i)=>{ if(i && t.y-tags[i-1].y<13) t.y=tags[i-1].y+13; if(t.t) g+=`<text x="${X(n-1+F)+9}" y="${t.y+4}" font-size="11" font-weight="600" fill="${t.col}" font-family="IBM Plex Mono,monospace">${t.t}</text>`; });
   g+=`<path d="${line(base.z,0)}" fill="none" stroke="${sel[2]}" stroke-width="2.4"/><circle cx="${X(n-1)}" cy="${Y(base.z[n-1])}" r="4" fill="${sel[2]}" stroke="var(--panel)" stroke-width="2"/>`;
   $("cychart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" dir="ltr" role="img" aria-label="نمودار موجی فاصله قیمت از میانگین یک‌ساله">${g}</svg>`;
-  $("cyleg").innerHTML=ok.map(([id,fa,col])=>`<span><i style="background:${col}"></i>${fa}</span>`).join("")+`<span><i style="background:repeating-linear-gradient(90deg,var(--ink) 0 4px,transparent 4px 7px)"></i>موج سینوسی برازش‌شده (${sel[1]})</span>`;
-  $("cytab").innerHTML=`<thead><tr><th>بازار</th><th>فاصله از میانگین یک‌ساله</th><th>جایگاه در موج</th><th>طول چرخه غالب</th><th>تطابق موج</th><th>قله بعدی (تخمینی)</th><th>کف بعدی (تخمینی)</th></tr></thead><tbody>`+
-    CYC.map(([id,fa,col])=>{ const w=Wv[id]; if(!w) return `<tr><td class="name">${fa}</td><td colspan="6" class="muted">تاریخچه کافی نیست</td></tr>`; const f=w.fit, last=w.d[w.d.length-1], z=w.z[w.z.length-1];
+  $("cyleg").innerHTML=ok.map(([id,fa,col])=>`<span><i style="background:${col}"></i>${fa}${Wv[id].bond?" · بازده":""} <span class="num" style="color:var(--ink)">${Wv[id].bond? Wv[id].px.toFixed(2)+"%" : pnum(Wv[id].px)}</span></span>`).join("")+`<span><i style="background:repeating-linear-gradient(90deg,var(--ink) 0 4px,transparent 4px 7px)"></i>موج سینوسی برازش‌شده (${sel[1]})</span>`;
+  $("cytab").innerHTML=`<thead><tr><th>بازار</th><th>قیمت فعلی</th><th>میانگین یک‌ساله</th><th>فاصله از میانگین</th><th>جایگاه در موج</th><th>طول چرخه غالب</th><th>تطابق موج</th><th>قله بعدی (تخمینی)</th><th>کف بعدی (تخمینی)</th><th>قیمت تخمینی انتهای مسیر</th></tr></thead><tbody>`+
+    CYC.map(([id,fa,col])=>{ const w=Wv[id]; if(!w) return `<tr><td class="name">${fa}</td><td colspan="9" class="muted">تاریخچه کافی نیست</td></tr>`; const f=w.fit, last=w.d[w.d.length-1], z=w.z[w.z.length-1];
       const pos= z>1.5?"نزدیک اوج موج": z<-1.5?"نزدیک کف موج": z>=0?"بالای میانگین":"زیر میانگین";
       const q= !f?"—": f.r2>=0.45?'<span class="pill p-up">خوب</span>': f.r2>=0.25?'<span class="pill p-flat">متوسط</span>':'<span class="pill p-down">ضعیف</span>';
-      return `<tr class="row ${S.cyA===id?"sel":""}" tabindex="0" data-id="${id}"><td class="name"><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col};margin-left:6px"></i>${fa}</td><td>${pct((Math.exp(w.dev[w.dev.length-1])-1)*100)}</td><td>${pos}${f?` · موج ${f.rising?"رو به بالا":"رو به پایین"}`:""}</td><td>${f?`<span class="num">${Math.round(f.P/4.345)}</span> ماه`:"—"}</td><td>${q}${f?` <span class="num muted">${Math.round(f.r2*100)}%</span>`:""}</td><td><span class="num">${f?addWeeks(last,f.peak):"—"}</span></td><td><span class="num">${f?addWeeks(last,f.trough):"—"}</span></td></tr>`; }).join("")+"</tbody>";
+      return `<tr class="row ${S.cyA===id?"sel":""}" tabindex="0" data-id="${id}"><td class="name"><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col};margin-left:6px"></i>${fa}</td><td>${w.bond? `<span class="num">${w.px.toFixed(2)}%</span> <span class="sub">بازده</span>` : fmt(w.px)}</td><td>${w.bond?"—":fmt(w.avg)}</td><td>${pct((Math.exp(w.dev[w.dev.length-1])-1)*100)}</td><td>${pos}${f?` · موج ${f.rising?"رو به بالا":"رو به پایین"}`:""}</td><td>${f?`<span class="num">${Math.round(f.P/4.345)}</span> ماه`:"—"}</td><td>${q}${f?` <span class="num muted">${Math.round(f.r2*100)}%</span>`:""}</td><td><span class="num">${f?addWeeks(last,f.peak):"—"}</span></td><td><span class="num">${f?addWeeks(last,f.trough):"—"}</span></td><td>${w.bond||w.projZ==null?"—":`${fmt(zPrice(w,w.projZ))} <span class="sub num">${w.projD}</span>`}</td></tr>`; }).join("")+"</tbody>";
   $("cytab").querySelectorAll("tr.row").forEach(tr=>{ const go=()=>{S.cyA=tr.dataset.id;renderCycle();}; tr.onclick=go; tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}}; });
 }
 
