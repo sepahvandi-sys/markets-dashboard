@@ -169,6 +169,16 @@ svg{direction:ltr}
     </div>
   </section>
 
+  <section id="s-cycle">
+    <div class="sec-head">
+      <h2>موج زمان و قیمت</h2>
+      <div class="tabs" id="cy-tabs"><button class="tab" type="button" data-w="156" aria-pressed="false">۳ سال</button><button class="tab" type="button" data-w="260" aria-pressed="true">۵ سال</button><button class="tab" type="button" data-w="416" aria-pressed="false">۸ سال</button></div>
+    </div>
+    <div class="chartbox" style="align-self:stretch"><div id="cychart"><div class="skel">نمودار موجی پس از رسیدن تاریخچه ساخته می‌شود…</div></div><div class="legend" id="cyleg"></div></div>
+    <div class="scroll"><table id="cytab"></table></div>
+    <div class="sub">هر خط نشان می‌دهد قیمت آن بازار چقدر از میانگین یک‌ساله خودش بالاتر یا پایین‌تر است؛ برای اینکه چهار بازار با هم قابل مقایسه باشند، فاصله با نوسان معمول همان بازار هم‌مقیاس شده است (۲+ یعنی خیلی بالاتر از حد معمول، ۲- یعنی خیلی پایین‌تر). خط‌چین، موج سینوسی‌ای است که بهترین تطابق را با بازار انتخاب‌شده دارد و تا ۶ ماه آینده ادامه داده شده است. «قیمت اوراق» از بازده اوراق ۱۰ ساله خزانه آمریکا با دیرش حدود ۸٫۵ سال برآورد شده و وارون بازده حرکت می‌کند. بازارها ساعت دقیق نیستند: هرجا «تطابق موج» پایین است، زمان قله و کف بعدی را جدی نگیرید.</div>
+  </section>
+
   <section id="s-links">
     <div class="sec-head">
       <h2>ارتباط قیمت و زمان بین بازارها</h2>
@@ -229,7 +239,7 @@ const ASSETS = [
 const BYID = Object.fromEntries(ASSETS.map(a=>[a.id,a]));
 const HZ = {short:"کوتاه‌مدت", medium:"میان‌مدت", long:"بلندمدت"};
 const HZ_DESC = {short:"چند روز تا چند هفته · نمودار روزانه ۴ ماه اخیر", medium:"چند هفته تا چند ماه · نمودار روزانه یک سال", long:"چند ماه تا چند سال · نمودار هفتگی ۵ سال"};
-const S = {daily:{}, weekly:{}, hist:{}, full:{}, macro:{}, btH:"medium", ladA:"gold", house:{}, errs:{}, stamps:{}, asset:"gold", hz:"medium", corrW:60};
+const S = {cyA:"gold", cyW:260, daily:{}, weekly:{}, hist:{}, full:{}, macro:{}, btH:"medium", ladA:"gold", house:{}, errs:{}, stamps:{}, asset:"gold", hz:"medium", corrW:60};
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -419,6 +429,51 @@ function signal(id,h){
       gap: h==="long"? now/best.sl[n-1]-1 : best.fa[n-1]/best.sl[n-1]-1, IS:best.IS,OOS,ALL,verdict,from:ser[a].d,st,line:best.sl[n-1]};
     out.near=Math.abs(out.gap)<NEAR[h]; }
   memo.set(key,out); return out;
+}
+
+/* ---------- time-price waves: deviation from the 1-year average, with a fitted sine ---------- */
+const CYC=[["gold","طلا","var(--gold)"],["silver","نقره","var(--sup)"],["bond","قیمت اوراق ۱۰ ساله","var(--ma2)"],["btc","بیت‌کوین","var(--down)"]];
+function cycSeries(id){ const w=S.weekly[id==="bond"?"tnx":id]; if(!w||w.length<130) return null;
+  if(id!=="bond") return w.map(x=>({d:x.d,c:x.c}));
+  let p=100; return w.map((x,i)=>{ if(i) p*=Math.max(0.5,1-8.5*(x.c-w[i-1].c)/100+w[i-1].c/5200); return {d:x.d,c:p}; }); }
+function wave(id,weeks){ const s=cycSeries(id); if(!s) return null; const c=s.map(x=>x.c), m=sma(c,52); const d=[],dev=[];
+  for(let i=Math.max(51,c.length-weeks);i<c.length;i++){ d.push(s[i].d); dev.push(Math.log(c[i]/m[i])); }
+  if(dev.length<60) return null; const sd=Math.sqrt(dev.reduce((a,v)=>a+v*v,0)/dev.length)||1;
+  return {d,dev,z:dev.map(v=>v/sd),fit:sineFit(dev.map(v=>v/sd))}; }
+function sineFit(z){ const n=z.length, mean=z.reduce((a,b)=>a+b,0)/n; let sst=0; z.forEach(v=>sst+=(v-mean)**2); let best=null;
+  for(let P=26;P<=Math.min(n*0.8,260);P++){ const k=2*Math.PI/P; let ss=0,cc=0,sc=0,ys=0,yc=0,ms=0,mc=0;
+    for(let t=0;t<n;t++){ ms+=Math.sin(k*t); mc+=Math.cos(k*t); } ms/=n; mc/=n;
+    for(let t=0;t<n;t++){ const a=Math.sin(k*t)-ms, b=Math.cos(k*t)-mc, y=z[t]-mean; ss+=a*a; cc+=b*b; sc+=a*b; ys+=y*a; yc+=y*b; }
+    const det=ss*cc-sc*sc; if(Math.abs(det)<1e-9) continue; const A=(ys*cc-yc*sc)/det, B=(yc*ss-ys*sc)/det;
+    const r2=(A*ys+B*yc)/sst; if(!best||r2>best.r2) best={P,k,A,B,c0:mean-A*ms-B*mc,r2,n}; }
+  if(best){ const ph=Math.atan2(best.B,best.A), nxt=t0=>{ let t=(t0-ph)/best.k; while(t<best.n-1) t+=best.P; return t-(best.n-1); };
+    best.f=t=>best.c0+best.A*Math.sin(best.k*t)+best.B*Math.cos(best.k*t); best.peak=nxt(Math.PI/2); best.trough=nxt(-Math.PI/2); best.rising=best.f(best.n)>best.f(best.n-1); }
+  return best; }
+const addWeeks=(d,w)=>{ if(!isFinite(w)) return "—"; const t=new Date(d+"T00:00:00Z"); t.setUTCDate(t.getUTCDate()+Math.round(w*7)); return t.toISOString().slice(0,7); };
+function renderCycle(){
+  const Wv={}; CYC.forEach(([id])=>Wv[id]=wave(id,S.cyW)); const ok=CYC.filter(([id])=>Wv[id]);
+  $("cy-tabs").querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",S.cyW==b.dataset.w); b.onclick=()=>{S.cyW=+b.dataset.w; renderCycle();};});
+  if(!ok.length){ $("cytab").innerHTML=""; $("cyleg").innerHTML=""; return; }
+  if(!Wv[S.cyA]) S.cyA=ok[0][0];
+  const base=Wv[S.cyA], n=base.d.length, F=26, W=1100,H=380,pl=8,pr=44,pt=14,pb=26, R=3.2;
+  const X=i=>pl+(W-pl-pr)*i/(n-1+F), Y=v=>pt+(H-pt-pb)*(1-(Math.max(-R,Math.min(R,v))+R)/(2*R));
+  let g="";
+  for(let v=-3;v<=3;v++){ const y=Y(v); g+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="${v?1:1.6}"/><text x="${W-pr+6}" y="${y+4}" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${v>0?"+":""}${v}</text>`; }
+  let yr=""; base.d.forEach((d,i)=>{ const y=d.slice(0,4); if(y!==yr){ if(yr) g+=`<line x1="${X(i)}" x2="${X(i)}" y1="${pt}" y2="${H-pb}" stroke="var(--line)" stroke-dasharray="2 4"/><text x="${X(i)+4}" y="${H-8}" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${y}</text>`; yr=y; } });
+  g+=`<rect x="${X(n-1)}" width="${X(n-1+F)-X(n-1)}" y="${pt}" height="${H-pt-pb}" fill="var(--gold)" opacity="0.06"/><text x="${X(n-1)+6}" y="${pt+14}" font-size="11" fill="var(--muted)" font-family="Vazirmatn,sans-serif">آینده</text>`;
+  const line=(z,off)=>z.map((v,i)=>(i?"L":"M")+X(i+off).toFixed(1)+","+Y(v).toFixed(1)).join("");
+  ok.forEach(([id,,col])=>{ if(id===S.cyA) return; const w=Wv[id]; g+=`<path d="${line(w.z,n-w.z.length)}" fill="none" stroke="${col}" stroke-width="1.3" opacity="0.55"/>`; });
+  const sel=CYC.find(x=>x[0]===S.cyA), ft=base.fit;
+  if(ft){ const pts=[]; for(let t=0;t<n+F;t++) pts.push(ft.f(t)); g+=`<path d="${line(pts,0)}" fill="none" stroke="${sel[2]}" stroke-width="1.6" stroke-dasharray="7 5" opacity="0.9"/>`; }
+  g+=`<path d="${line(base.z,0)}" fill="none" stroke="${sel[2]}" stroke-width="2.4"/><circle cx="${X(n-1)}" cy="${Y(base.z[n-1])}" r="4" fill="${sel[2]}" stroke="var(--panel)" stroke-width="2"/>`;
+  $("cychart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" dir="ltr" role="img" aria-label="نمودار موجی فاصله قیمت از میانگین یک‌ساله">${g}</svg>`;
+  $("cyleg").innerHTML=ok.map(([id,fa,col])=>`<span><i style="background:${col}"></i>${fa}</span>`).join("")+`<span><i style="background:repeating-linear-gradient(90deg,var(--ink) 0 4px,transparent 4px 7px)"></i>موج سینوسی برازش‌شده (${sel[1]})</span>`;
+  $("cytab").innerHTML=`<thead><tr><th>بازار</th><th>فاصله از میانگین یک‌ساله</th><th>جایگاه در موج</th><th>طول چرخه غالب</th><th>تطابق موج</th><th>قله بعدی (تخمینی)</th><th>کف بعدی (تخمینی)</th></tr></thead><tbody>`+
+    CYC.map(([id,fa,col])=>{ const w=Wv[id]; if(!w) return `<tr><td class="name">${fa}</td><td colspan="6" class="muted">تاریخچه کافی نیست</td></tr>`; const f=w.fit, last=w.d[w.d.length-1], z=w.z[w.z.length-1];
+      const pos= z>1.5?"نزدیک اوج موج": z<-1.5?"نزدیک کف موج": z>=0?"بالای میانگین":"زیر میانگین";
+      const q= !f?"—": f.r2>=0.45?'<span class="pill p-up">خوب</span>': f.r2>=0.25?'<span class="pill p-flat">متوسط</span>':'<span class="pill p-down">ضعیف</span>';
+      return `<tr class="row ${S.cyA===id?"sel":""}" tabindex="0" data-id="${id}"><td class="name"><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col};margin-left:6px"></i>${fa}</td><td>${pct((Math.exp(w.dev[w.dev.length-1])-1)*100)}</td><td>${pos}${f?` · موج ${f.rising?"رو به بالا":"رو به پایین"}`:""}</td><td>${f?`<span class="num">${Math.round(f.P/4.345)}</span> ماه`:"—"}</td><td>${q}${f?` <span class="num muted">${Math.round(f.r2*100)}%</span>`:""}</td><td><span class="num">${f?addWeeks(last,f.peak):"—"}</span></td><td><span class="num">${f?addWeeks(last,f.trough):"—"}</span></td></tr>`; }).join("")+"</tbody>";
+  $("cytab").querySelectorAll("tr.row").forEach(tr=>{ const go=()=>{S.cyA=tr.dataset.id;renderCycle();}; tr.onclick=go; tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}}; });
 }
 
 /* ---------- staged buy/sell plan: price levels and the share to trade at each ---------- */
@@ -781,7 +836,7 @@ function renderHouse(){
   $("hchart").className="fade"; $("hchart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" dir="ltr" role="img" aria-label="رشد قیمت مسکن و نرخ وام">${g}</svg>`;
 }
 
-function render(){ try{rebuild();renderSummary();renderSignals();renderMacro();renderDetail();renderCorr();renderLeadLag();renderSeason();renderRatios();renderHouse();}catch(e){console.error(e);} }
+function render(){ try{rebuild();renderSummary();renderSignals();renderCycle();renderMacro();renderDetail();renderCorr();renderLeadLag();renderSeason();renderRatios();renderHouse();}catch(e){console.error(e);} }
 
 render();
 async function loadStatic(){
