@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>رصدخانه بازارها</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a market observatory — summary board first, then one asset in depth, then the links between markets, then housing. */
+:root{
+  --bg:#f3f1ec; --panel:#fbfaf7; --ink:#1d2330; --muted:#636b7a; --line:#dcd8cf;
+  --gold:#a8741a; --gold-soft:#f1e3c4;
+  --up:#13795b; --up-soft:#d6efe5; --down:#b4382f; --down-soft:#f6dcd8; --warn:#9a6b00; --warn-soft:#f6ead0;
+  --sup:#1f7a8c; --res:#b4382f; --ma1:#a8741a; --ma2:#6b5fb5;
+  --f-body:"Vazirmatn",Tahoma,"Segoe UI",sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161f; --panel:#1a1f2b; --ink:#e7e4dc; --muted:#99a1b0; --line:#2c3342;
+  --gold:#e0b25a; --gold-soft:#3a3122; --up:#4cc79a; --up-soft:#173a30; --down:#f0806f; --down-soft:#41231f; --warn:#e8c063; --warn-soft:#3b3220;
+  --sup:#5fbfd2; --res:#f0806f; --ma1:#e0b25a; --ma2:#a99cf0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161f; --panel:#1a1f2b; --ink:#e7e4dc; --muted:#99a1b0; --line:#2c3342;
+  --gold:#e0b25a; --gold-soft:#3a3122; --up:#4cc79a; --up-soft:#173a30; --down:#f0806f; --down-soft:#41231f; --warn:#e8c063; --warn-soft:#3b3220;
+  --sup:#5fbfd2; --res:#f0806f; --ma1:#e0b25a; --ma2:#a99cf0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.7;direction:rtl;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-size:26px;font-weight:800;letter-spacing:-.2px}
+h2{font-size:19px;font-weight:700}
+h3{font-size:15px;font-weight:700}
+.sub{color:var(--muted);font-size:13px}
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--gold);padding-bottom:14px}
+.top .mark{display:flex;gap:12px;align-items:center}
+.top .sigil{width:38px;height:38px;border-radius:50%;background:conic-gradient(var(--gold) 0 25%,var(--sup) 0 50%,var(--down) 0 75%,var(--ma2) 0);flex:none}
+.status{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font-family:var(--f-body);font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--gold)}
+button:focus-visible,.row:focus-visible,.tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button.primary{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:700}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.p-up{background:var(--up-soft);color:var(--up)} .p-down{background:var(--down-soft);color:var(--down)}
+.p-flat{background:var(--warn-soft);color:var(--warn)} .p-gold{background:var(--gold-soft);color:var(--gold)}
+.up{color:var(--up)} .down{color:var(--down)} .muted{color:var(--muted)}
+.notice{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.notice.err{border-color:var(--down)}
+section{display:flex;flex-direction:column;gap:14px}
+.sec-head{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:12px;background:var(--panel);position:sticky;top:0}
+tr.row{cursor:pointer} tr.row:hover td{background:var(--gold-soft)} tr.row.sel td{background:var(--gold-soft)}
+tr:last-child td{border-bottom:none}
+td.name{font-weight:700}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{border-radius:999px;padding:4px 14px}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.detail{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
+@media (max-width:860px){.detail{grid-template-columns:minmax(0,1fr)}}
+.chartbox{align-self:start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
+svg{direction:ltr}
+.chartbox svg{display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);padding:4px 6px 0}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-left:4px}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.kv span:first-child{color:var(--muted)}
+.lvl{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--line)}
+.lvl:last-child{border-bottom:none}
+.sig{font-size:13px;padding:6px 10px;border-radius:8px;border-inline-start:4px solid var(--muted);background:var(--bg)}
+.sig.op{border-color:var(--up)} .sig.th{border-color:var(--down)} .sig.nt{border-color:var(--warn)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.heat td{text-align:center;font-family:var(--f-num);font-size:12px;padding:6px 8px;direction:ltr;unicode-bidi:isolate}
+.heat th{text-align:center}
+.heat td.rowh,.heat th.rowh{text-align:right;font-family:var(--f-body);font-weight:600;direction:rtl}
+.heat td.cur{outline:2px solid var(--gold);outline-offset:-2px}
+.ratio .big{font-size:22px;font-weight:700}
+.bar{height:6px;border-radius:3px;background:var(--line);position:relative;direction:ltr}
+.bar b{position:absolute;top:-3px;width:4px;height:12px;border-radius:2px;background:var(--gold)}
+.foot{color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+.skel{color:var(--muted);padding:24px;text-align:center}
+@media (prefers-reduced-motion:no-preference){.fade{animation:f .35s ease-out}@keyframes f{from{opacity:.4}to{opacity:1}}}
+</style>
+
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="mark">
+      <div class="sigil" aria-hidden="true"></div>
+      <div>
+        <h1>رصدخانه بازارها</h1>
+        <div class="sub">طلا، نقره، دلار، نفت، کریپتو، سهام و مسکن آمریکا · روند، کف و سقف در سه افق زمانی</div>
+      </div>
+    </div>
+    <div class="status">
+      <span id="stamp" class="sub">در حال آماده‌سازی…</span>
+      <button id="refresh" type="button">تازه‌سازی داده</button>
+    </div>
+  </header>
+
+  <div id="notice" hidden></div>
+
+  <section id="s-summary">
+    <div class="sec-head">
+      <h2>نمای کلی بازارها</h2>
+      <span class="sub">روی هر ردیف بزنید تا جزئیات آن بازار پایین‌تر باز شود</span>
+    </div>
+    <div class="scroll"><table id="summary"><tbody><tr><td class="skel">داده‌ها در حال بارگذاری هستند…</td></tr></tbody></table></div>
+  </section>
+
+  <section id="s-signals">
+    <div class="sec-head">
+      <h2>هشدار تغییر روند و سیگنال خرید و فروش</h2>
+      <span class="sub">هر سیگنال روی داده روزانه ۲۰ سال گذشته همان بازار آزموده شده است</span>
+    </div>
+    <div class="card" id="fresh"><div class="skel">سیگنال‌ها پس از رسیدن تاریخچه ۲۰ ساله محاسبه می‌شوند…</div></div>
+    <div class="scroll"><table id="sigmx"></table></div>
+    <div class="card" style="min-width:0">
+      <div class="sec-head"><h3>کارنامه ۲۰ ساله هر سیگنال</h3>
+        <div class="tabs" id="b-tabs"><button class="tab" type="button" data-h="short" aria-pressed="false">کوتاه‌مدت</button><button class="tab" type="button" data-h="medium" aria-pressed="true">میان‌مدت</button><button class="tab" type="button" data-h="long" aria-pressed="false">بلندمدت</button></div></div>
+      <div class="scroll" style="border:none"><table id="btest"></table></div>
+      <div class="sub">روش: «خرید» یعنی میانگین سریع بالای میانگین کند رفته و روند صعودی شده؛ «فروش» یعنی برعکس و خروج به نقد (بدون فروش استقراضی). ستون «شرایط نرخ بهره و تورم» می‌گوید چرخه فدرال و جهت تورم، با در نظر گرفتن تأخیری که اثرشان به آن بازار می‌رسد، در ۲۰ سال گذشته برای آن بازار موافق بوده یا مخالف؛ سیگنال خرید در شرایط مخالف را با احتیاط بیشتری بگیرید. معامله یک روز بعد از سیگنال و با ۰٫۱٪ هزینه در هر جابه‌جایی حساب شده است. برای هر بازار از بین سه قاعده، بهترین روی ۷۰٪ اول تاریخچه انتخاب و روی ۳۰٪ آخر که در انتخاب نقشی نداشته دوباره سنجیده شده است. «معتبر» یعنی نسبت بازده به بیشترین افت در هر دو بخش از خرید و نگهداری بهتر بوده؛ «متوسط» یعنی فقط در کل دوره بهتر بوده؛ «ضعیف» یعنی سیگنال برتری نداشته و فقط برای اطلاع است. تاریخچه بیت‌کوین از ۲۰۱۴ و اتریوم از ۲۰۱۷ شروع می‌شود. عملکرد گذشته تضمین آینده نیست.</div>
+    </div>
+  </section>
+
+  <section id="s-macro">
+    <div class="sec-head"><h2>فدرال رزرو و تورم</h2><span class="sub">نرخ بهره، تورم آمریکا و جهان، و رفتار ۲۰ ساله هر بازار در هر شرایط</span></div>
+    <div class="grid3" id="macro"><div class="card"><div class="skel">در انتظار داده FRED…</div></div></div>
+    <div class="detail" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+      <div class="card" style="min-width:0"><h3>بازده ۶ ماه بعد در هر چرخه نرخ بهره فدرال</h3><div class="scroll" style="border:none"><table class="heat" id="fedtab"></table></div></div>
+      <div class="card" style="min-width:0"><h3>بازده ۶ ماه بعد در هر وضعیت تورم آمریکا</h3><div class="scroll" style="border:none"><table class="heat" id="inftab"></table></div></div>
+    </div>
+    <div class="card" style="min-width:0"><h3>اثر با تأخیر: تغییر نرخ بهره و تورم چند ماه بعد به هر بازار می‌رسد</h3><div class="scroll" style="border:none"><table id="lagtab"></table></div>
+      <div class="sub">برای هر بازار، تغییر ۶ ماهه نرخ فدرال و تورم با بازده ۶ ماهه همان بازار در فاصله‌های ۰ تا ۱۸ ماه بعد مقایسه شده و فاصله‌ای که قوی‌ترین رابطه را داشته آمده است. همبستگی منفی یعنی افزایش نرخ یا تورم با افت آن بازار همراه بوده. رابطه زیر ۰٫۱۵ ضعیف است. همین تأخیرها در ستون «شرایط نرخ بهره و تورم» جدول سیگنال‌ها به کار رفته‌اند.</div></div>
+    <div class="sub">عدد بالا میانگین بازده ۶ ماه بعد و عدد کوچک درصد دفعات مثبت است؛ ستون با کادر طلایی وضعیت فعلی است. چرخه نرخ بهره از تغییر ۶ ماهه نرخ فدرال (بیش از ۰٫۲ واحد) و وضعیت تورم از تغییر ۶ ماهه تورم سالانه (بیش از ۰٫۳ واحد) تعیین می‌شود. تورم با یک ماه تأخیر انتشار حساب شده تا از داده‌ای که آن زمان منتشر نشده بود استفاده نشود. در ۲۰ سال فقط چند چرخه کامل وجود داشته، پس این اعداد تمایل تاریخی‌اند نه قانون.</div>
+  </section>
+
+  <section id="s-detail">
+    <div class="sec-head">
+      <h2 id="d-title">جزئیات بازار</h2>
+      <div class="tabs" id="h-tabs" role="group" aria-label="افق زمانی">
+        <button class="tab" type="button" data-h="short" aria-pressed="false">کوتاه‌مدت</button>
+        <button class="tab" type="button" data-h="medium" aria-pressed="true">میان‌مدت</button>
+        <button class="tab" type="button" data-h="long" aria-pressed="false">بلندمدت</button>
+      </div>
+    </div>
+    <div class="tabs" id="a-tabs" role="group" aria-label="بازار"></div>
+    <div class="detail">
+      <div class="chartbox"><div id="chart" class="skel">نمودار پس از رسیدن داده نمایش داده می‌شود.</div>
+        <div class="legend"><span><i style="background:var(--ink)"></i>قیمت</span><span><i style="background:var(--ma1)"></i><span id="lg1">میانگین کوتاه</span></span><span><i style="background:var(--ma2)"></i><span id="lg2">میانگین بلند</span></span><span><i style="background:var(--sup)"></i>حمایت (کف)</span><span><i style="background:var(--res)"></i>مقاومت (سقف)</span></div>
+      </div>
+      <div class="side" id="side"></div>
+    </div>
+  </section>
+
+  <section id="s-links">
+    <div class="sec-head">
+      <h2>ارتباط قیمت و زمان بین بازارها</h2>
+      <span class="sub">همبستگی، تقدم و تأخر، نسبت‌ها و فصلی‌بودن</span>
+    </div>
+    <div class="grid3" id="ratios"></div>
+    <div class="detail" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+      <div class="card" style="min-width:0">
+        <div class="sec-head"><h3>همبستگی بازده روزانه</h3>
+          <div class="tabs" id="c-tabs"><button class="tab" type="button" data-w="60" aria-pressed="true">۳ ماه</button><button class="tab" type="button" data-w="240" aria-pressed="false">۱ سال</button></div></div>
+        <div class="scroll" style="border:none"><table class="heat" id="corr"></table></div>
+        <div class="sub">نزدیک ۱+ یعنی هم‌جهت، نزدیک ۱− یعنی خلاف جهت. خانه‌های با کادر طلایی رابطه‌ای هستند که در ۳ ماه اخیر علامتش با یک سال گذشته فرق کرده است (شکست رابطه).</div>
+      </div>
+      <div class="card" style="min-width:0">
+        <h3>تقدم و تأخر (کدام بازار جلوتر حرکت می‌کند)</h3>
+        <div class="scroll" style="border:none"><table id="leadlag"></table></div>
+        <div class="sub">بر اساس بازده هفتگی ۵ سال اخیر. «تأخیر» یعنی حرکت بازار دوم به‌طور میانگین چند هفته بعد از بازار اول بیشترین هم‌بستگی را دارد. رابطه زیر ۰٫۱۵ ضعیف است.</div>
+      </div>
+    </div>
+    <div class="card" style="min-width:0">
+      <div class="sec-head"><h3>فصلی‌بودن: میانگین بازده هر ماه میلادی (۱۰ سال)</h3><span class="sub">ستون طلایی ماه جاری است</span></div>
+      <div class="scroll" style="border:none"><table class="heat" id="season"></table></div>
+      <div class="sub">عدد بالا میانگین بازده آن ماه است و عدد کوچک درصد سال‌هایی که آن ماه مثبت بسته شده. الگوی فصلی فقط یک تمایل تاریخی است.</div>
+    </div>
+  </section>
+
+  <section id="s-house">
+    <div class="sec-head"><h2>مسکن آمریکا</h2><span class="sub">داده ماهانه و هفتگی FRED؛ با تأخیر انتشار ۱ تا ۲ ماه</span></div>
+    <div class="grid3" id="house"></div>
+    <div class="chartbox"><div id="hchart" class="skel">نمودار مسکن پس از رسیدن داده نمایش داده می‌شود.</div>
+      <div class="legend"><span><i style="background:var(--gold)"></i>رشد سالانه قیمت مسکن Case-Shiller (٪)</span><span><i style="background:var(--ma2)"></i>نرخ وام مسکن ۳۰ ساله (٪)</span></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <div>منبع: Yahoo Finance (قیمت‌ها) و FRED بانک فدرال رزرو سنت‌لوئیس (نرخ بهره، تورم، مسکن)، که مستقیم و رایگان خوانده می‌شوند. همه داده‌ها هر ساعت یک بار به‌طور خودکار تازه می‌شوند.</div>
+    <div>کف و سقف‌ها از نقاط چرخش واقعی قیمت (سقف و کف‌های محلی) و خوشه‌بندی آن‌ها به‌دست آمده‌اند و عدد کنار هر سطح تعداد دفعات واکنش قیمت به آن است. این صفحه ابزار تحلیل است و توصیه خرید یا فروش نیست.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const SERVER = "Firecrawl", TOOL = "alexandria_library_read";
+const OBJ = "Live market dashboard: trends and support/resistance for gold, silver, dollar, oil, crypto, US stocks and housing";
+const HOUR = 3600e3, DAY = 24*HOUR, WEEK = 7*DAY;
+const ASSETS = [
+  {id:"gold", sym:"GC=F", fa:"طلا", unit:"دلار/اونس"},
+  {id:"silver", sym:"SI=F", fa:"نقره", unit:"دلار/اونس"},
+  {id:"dxy", sym:"DX-Y.NYB", fa:"شاخص دلار", unit:"DXY"},
+  {id:"oil", sym:"BZ=F", fa:"نفت برنت", unit:"دلار/بشکه"},
+  {id:"btc", sym:"BTC-USD", fa:"بیت‌کوین", unit:"دلار", crypto:true},
+  {id:"eth", sym:"ETH-USD", fa:"اتریوم", unit:"دلار", crypto:true},
+  {id:"spx", sym:"^GSPC", fa:"S&P 500", unit:"واحد"},
+  {id:"ndx", sym:"^IXIC", fa:"نزدک", unit:"واحد"},
+  {id:"tnx", sym:"^TNX", fa:"بازده اوراق ۱۰ ساله", unit:"درصد"},
+];
+const BYID = Object.fromEntries(ASSETS.map(a=>[a.id,a]));
+const HZ = {short:"کوتاه‌مدت", medium:"میان‌مدت", long:"بلندمدت"};
+const HZ_DESC = {short:"چند روز تا چند هفته · نمودار روزانه ۴ ماه اخیر", medium:"چند هفته تا چند ماه · نمودار روزانه یک سال", long:"چند ماه تا چند سال · نمودار هفتگی ۵ سال"};
+const S = {daily:{}, weekly:{}, hist:{}, full:{}, macro:{}, btH:"medium", house:{}, errs:{}, stamps:{}, asset:"gold", hz:"medium", corrW:60};
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- math ---------- */
+const sma = (a,n) => { let s=0; return a.map((v,i)=>{ s+=v; if(i>=n) s-=a[i-n]; return i<n-1?null:s/n; }); };
+function ema(a,n){const k=2/(n+1);let p=null;return a.map((v,i)=>{p = p==null? v : v*k+p*(1-k); return i<n-1?null:p;});}
+function rsi(c,n=14){if(c.length<n+1)return null;let g=0,l=0;for(let i=1;i<=n;i++){const d=c[i]-c[i-1];d>0?g+=d:l-=d;}g/=n;l/=n;
+  for(let i=n+1;i<c.length;i++){const d=c[i]-c[i-1];g=(g*(n-1)+Math.max(d,0))/n;l=(l*(n-1)+Math.max(-d,0))/n;}return l===0?100:100-100/(1+g/l);}
+function atr(b,n=14){if(b.length<n+1)return null;const tr=[];for(let i=1;i<b.length;i++){const p=b[i-1].c;tr.push(Math.max(b[i].h-b[i].l,Math.abs(b[i].h-p),Math.abs(b[i].l-p)));}
+  return tr.slice(-n).reduce((s,v)=>s+v,0)/n;}
+function linreg(y){const n=y.length;let sx=0,sy=0,sxx=0,sxy=0,syy=0;y.forEach((v,i)=>{sx+=i;sy+=v;sxx+=i*i;sxy+=i*v;syy+=v*v});
+  const m=(n*sxy-sx*sy)/(n*sxx-sx*sx);const r=(n*sxy-sx*sy)/Math.sqrt((n*sxx-sx*sx)*(n*syy-sy*sy));return {m, r2: isFinite(r)? r*r : 0};}
+function corr(x,y){const n=Math.min(x.length,y.length);if(n<8)return null;let sx=0,sy=0;for(let i=0;i<n;i++){sx+=x[i];sy+=y[i];}const mx=sx/n,my=sy/n;
+  let a=0,b=0,c=0;for(let i=0;i<n;i++){const dx=x[i]-mx,dy=y[i]-my;a+=dx*dy;b+=dx*dx;c+=dy*dy;}return b&&c? a/Math.sqrt(b*c):null;}
+function pivots(b,k){const out=[];for(let i=k;i<b.length-k;i++){let hi=true,lo=true;for(let j=i-k;j<=i+k;j++){if(b[j].h>b[i].h)hi=false;if(b[j].l<b[i].l)lo=false;}
+  if(hi)out.push({p:b[i].h,i,t:"h"});if(lo)out.push({p:b[i].l,i,t:"l"});}
+  // the most recent extreme of the window counts too, so a fresh top/bottom is not missed
+  const tail=b.slice(-k);const mh=Math.max(...tail.map(x=>x.h)),ml=Math.min(...tail.map(x=>x.l));
+  if(mh>=Math.max(...b.map(x=>x.h)))out.push({p:mh,i:b.length-1,t:"h"});if(ml<=Math.min(...b.map(x=>x.l)))out.push({p:ml,i:b.length-1,t:"l"});
+  return out;}
+function clusters(piv,tol){const s=[...piv].sort((a,b)=>a.p-b.p);const cl=[];
+  for(const p of s){const last=cl[cl.length-1];if(last && p.p-last.hi<=tol){last.pts.push(p);last.hi=p.p;}else cl.push({pts:[p],hi:p.p});}
+  return cl.map(c=>({level:c.pts.reduce((s,x)=>s+x.p,0)/c.pts.length,touches:c.pts.length,last:Math.max(...c.pts.map(x=>x.i))}));}
+
+/* ---------- data access ---------- */
+function bars(raw){return (raw||[]).filter(x=>x && x.close!=null && x.high!=null && x.low!=null).map(x=>({d:x.date,o:x.open,h:x.high,l:x.low,c:x.close}));}
+function horizonBars(id,h){const d=S.daily[id],w=S.weekly[id];
+  if(h==="short")return d? d.slice(-88):null; if(h==="medium")return d||null; return w? w.slice(-261):null;}
+
+function analyze(id,h){
+  const b=horizonBars(id,h); if(!b||b.length<30)return null;
+  const full = h==="long"? S.weekly[id] : S.daily[id]; const fc=full.map(x=>x.c);
+  const [n1,n2,kp,slopeLb] = h==="short"? [20,50,3,5] : h==="medium"? [50,200,6,10] : [40,200,4,8];
+  const m1 = (h==="short"? ema(fc,n1):sma(fc,n1)), m2 = (h==="short"? ema(fc,n2):sma(fc,n2));
+  const price=b[b.length-1].c, M1=m1[m1.length-1], M2=m2[m2.length-1], M1p=m1[m1.length-1-slopeLb];
+  const lr=linreg(b.map(x=>Math.log(x.c))); const per = h==="long"?52:(BYID[id].crypto?365:252);
+  const annual=(Math.exp(lr.m*per)-1)*100;
+  let score=0; score += price>M1?1:-1; if(M2!=null) score += M1>M2?1:-1; if(M1p!=null) score += M1>M1p?1:-1;
+  const a=atr(b,14); const tol = Math.max(a*0.6, price*(h==="long"?0.02:h==="medium"?0.008:0.004));
+  const cl=clusters(pivots(b,kp),tol);
+  const sup=cl.filter(c=>c.level<price-a*0.15).sort((x,y)=>y.level-x.level).slice(0,3);
+  const res=cl.filter(c=>c.level>price+a*0.15).sort((x,y)=>x.level-y.level).slice(0,3);
+  const hi=Math.max(...b.map(x=>x.h)), lo=Math.min(...b.map(x=>x.l));
+  const r=rsi(fc.slice(-200),14);
+  return {id,h,b,m1:m1.slice(-b.length),m2:m2.slice(-b.length),n1,n2,price,M1,M2,score,annual,r2:lr.r2,atr:a,sup,res,hi,lo,pos:(price-lo)/((hi-lo)||1),rsi:r};
+}
+function trendPill(score){
+  if(score>=3)return '<span class="pill p-up">صعودی قوی</span>';
+  if(score>=1)return '<span class="pill p-up" style="opacity:.8">صعودی ضعیف</span>';
+  if(score<=-3)return '<span class="pill p-down">نزولی قوی</span>';
+  return '<span class="pill p-down" style="opacity:.8">نزولی ضعیف</span>';
+}
+function signals(A){
+  const out=[]; if(!A)return out; const {price,atr:a,sup,res,score,rsi:r}=A; const H=HZ[A.h];
+  const ns=sup[0], nr=res[0];
+  if(ns && (price-ns.level) < a*1.2){ out.push(score>0? ["op",`فرصت (${H}): قیمت در روند صعودی به نزدیک حمایت ${fmt(ns.level)} برگشته است.`] : ["th",`هشدار (${H}): قیمت روی حمایت ${fmt(ns.level)} است؛ شکست آن در روند نزولی راه افت بیشتر را باز می‌کند.`]); }
+  if(nr && (nr.level-price) < a*1.2){ out.push(score<0? ["th",`تهدید (${H}): قیمت در روند نزولی به مقاومت ${fmt(nr.level)} رسیده است.`] : ["nt",`زیر سقف (${H}): مقاومت ${fmt(nr.level)} نزدیک است؛ عبور با قدرت از آن ادامه روند را تأیید می‌کند.`]); }
+  if(!nr) out.push(["op",`سقف تازه (${H}): قیمت بالاتر از همه سقف‌های این دوره است و مقاومت مشخصی بالای سر ندارد.`]);
+  if(!ns) out.push(["th",`کف تازه (${H}): قیمت پایین‌تر از همه کف‌های این دوره است و حمایت مشخصی زیر پا ندارد.`]);
+  if(r!=null && A.h!=="long"){ if(r>70)out.push(["th",`اشباع خرید: RSI برابر ${r.toFixed(0)} است و احتمال اصلاح کوتاه بالاست.`]); else if(r<30)out.push(["op",`اشباع فروش: RSI برابر ${r.toFixed(0)} است و احتمال برگشت کوتاه بالاست.`]); }
+  return out;
+}
+
+/* ---------- formatting ---------- */
+function fmt(v,dp){ if(v==null||!isFinite(v))return "—"; const a=Math.abs(v); const d = dp!=null?dp: a>=1000?0: a>=100?1: a>=10?2: 3;
+  return '<span class="num">'+v.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d})+'</span>'; }
+function pct(v,dp=1){ if(v==null||!isFinite(v))return "—"; const c=v>0?"up":v<0?"down":"muted"; return `<span class="num ${c}">${v>0?"+":""}${v.toFixed(dp)}%</span>`; }
+function chg(b,n){ if(!b||b.length<=n)return null; return (b[b.length-1].c/b[b.length-1-n].c-1)*100; }
+function rel(ms){ const m=Math.round((Date.now()-ms)/60000); if(m<1)return "همین الان"; if(m<60)return `${m} دقیقه پیش`; const h=Math.round(m/60); if(h<24)return `${h} ساعت پیش`; return `${Math.round(h/24)} روز پیش`; }
+
+/* ---------- loading ---------- */
+let mcp=null;
+const batches = {
+  daily: {stale:HOUR, calls: ASSETS.map(a=>({provider:"finance-yahoo-com",capability:"equities/history",options:{symbol:a.sym,interval:"1d",range:"1y"}}))},
+  house: {stale:DAY, calls: [
+    {provider:"fred-stlouisfed-org",capability:"economic-data/series_observations",options:{series_id:"CSUSHPINSA",observation_start:"2004-01-01",limit:1000}},
+    {provider:"fred-stlouisfed-org",capability:"economic-data/series_observations",options:{series_id:"MORTGAGE30US",observation_start:"2004-01-01",frequency:"m",limit:1000}},
+    {provider:"fred-stlouisfed-org",capability:"economic-data/series_observations",options:{series_id:"HOUST",observation_start:"2015-01-01",limit:1000}}]},
+};
+function results(payload){
+  let p=payload; if(typeof p==="string"){try{p=JSON.parse(p)}catch(e){return null}}
+  return p?.data?.alexandria || p?.alexandria || null;
+}
+const SYM2ID = Object.fromEntries(ASSETS.map(a=>[a.sym,a.id]));
+const FRED2ID = {CSUSHPINSA:"hpi", MORTGAGE30US:"mort", HOUST:"starts", DFF:"ff", DGS2:"y2", CPIAUCSL:"cpi", CP0000EZ19M086NEST:"ezcpi", FPCPITOTLZGWLD:"wcpi", T5YIFR:"be"};
+const FREDKEYS = {house:["hpi","mort","starts"], macro:["ff","y2","cpi","ezcpi","wcpi","be"]};
+const fredCall=(id,start,freq)=>({provider:"fred-stlouisfed-org",capability:"economic-data/series_observations",options:Object.assign({series_id:id,observation_start:start,limit:1000},freq?{frequency:freq}:{})});
+batches.macro={stale:DAY, calls:[fredCall("DFF","2005-01-01","m"),fredCall("DGS2","2005-01-01","m"),fredCall("CPIAUCSL","2005-01-01"),fredCall("CP0000EZ19M086NEST","2005-01-01"),fredCall("FPCPITOTLZGWLD","2000-01-01"),fredCall("T5YIFR","2005-01-01","m")]};
+function parsed(p){ if(typeof p==="string"){try{return JSON.parse(p)}catch(e){return null}} return p; }
+async function bash(requestId, command, B){
+  const r = await mcp.callTool(SERVER, TOOL, {calls:[{provider:"firecrawl",capability:"bash",options:{requestId, command}}], objective:OBJ}, {cache:{staleTime:B.stale, gcTime:7*DAY}});
+  const d = parsed(r.payload)?.data?.alexandria?.[0]?.data; const out = d && parsed(d.stdout);
+  if(!Array.isArray(out)) throw {code:"tool_error", message:(d&&d.stderr)||"خروجی Firecrawl خوانده نشد."};
+  return out;
+}
+// Firecrawl keeps large results on its side and returns only a preview; the page then asks for compact slices (free of charge).
+async function slices(name, requestId){
+  const B=batches[name], rows=[];
+  if(FREDKEYS[name]){ rows.push(...await bash(requestId, `jq -c '[.data.alexandria[] | select(.data.observations) | {s:.data.series_id, o:(.data.observations|map([.date,.value]))}]' response.json`, B)); }
+  else { const per = 3;
+    for(let i=0;i<ASSETS.length;i+=per){ const syms=JSON.stringify(ASSETS.slice(i,i+per).map(a=>a.sym));
+      rows.push(...await bash(requestId, `jq -c '[.data.alexandria[] | select(.data.bars) | select(.data.symbol as $s | ${syms} | index($s)) | {s:.data.symbol, b:(.data.bars|map([.date,.high,.low,.close]))}]' response.json`, B));
+      render(); } }
+  return rows;
+}
+function store(name, key, val){ if(!key||!val||!val.length)return; S[name][key]=val; }
+async function runBatch(name, force){
+  const B=batches[name];
+  const fetchIt = refresh => mcp.callTool(SERVER, TOOL, {calls:B.calls, objective:OBJ}, {cache:{staleTime:B.stale, gcTime:7*DAY, refresh}});
+  let res = await fetchIt(!!force); let p = parsed(res.payload);
+  const list = p?.data?.alexandria; if(!list) throw {code:"tool_error", message:"پاسخ Firecrawl قابل خواندن نبود."};
+  if(p.delivery==="retained" || list.some(it=>!it.data && !it.error)){
+    let rows;
+    try{ rows = await slices(name, p.requestId); }
+    catch(e){ if(!res.cache) throw e; res = await fetchIt(true); p = parsed(res.payload); rows = await slices(name, p.requestId); }
+    rows.forEach(r=>{ if(FREDKEYS[name]) store(name, FRED2ID[r.s], (r.o||[]).filter(o=>o[1]!=null).map(o=>({d:o[0],v:o[1]})));
+      else store(name, SYM2ID[r.s], (r.b||[]).filter(x=>x[1]!=null&&x[2]!=null&&x[3]!=null).map(x=>({d:x[0],h:x[1],l:x[2],c:x[3]}))); });
+  } else {
+    list.forEach(it=>{ if(!it.data)return;
+      if(FREDKEYS[name]) store(name, FRED2ID[it.data.series_id], (it.data.observations||[]).filter(o=>o.value!=null).map(o=>({d:o.date,v:o.value})));
+      else store(name, SYM2ID[it.data.symbol], bars(it.data.bars)); });
+  }
+  S.stamps[name]= res.cache?.storedAt || Date.now();
+  const keys = FREDKEYS[name] || ASSETS.map(a=>a.id);
+  keys.forEach(k=>{ const have = S[name][k]; if(have) delete S.errs[name+":"+k]; else S.errs[name+":"+k]="بدون داده"; });
+}
+const HIST_START="2006-11-01";
+const dayStr = n => new Date(n*864e5).toISOString().slice(0,10);
+async function loadHist(){
+  const B={stale:WEEK};
+  for(let g=0;g<ASSETS.length;g+=3){ const grp=ASSETS.slice(g,g+3);
+    const input={calls:grp.map(a=>({provider:"finance-yahoo-com",capability:"equities/history",options:{symbol:a.sym,interval:"1d",start:HIST_START}})), objective:OBJ};
+    const fetchIt = refresh => mcp.callTool(SERVER, TOOL, input, {cache:{staleTime:WEEK, gcTime:WEEK, refresh}});
+    let res=await fetchIt(false), p=parsed(res.payload);
+    if(!p?.data?.alexandria) throw {code:"tool_error", message:"پاسخ Firecrawl قابل خواندن نبود."};
+    const pull = async () => { for(const a of grp){ let flat=[];
+        for(const [x,y] of [[0,2700],[2700,5400],[5400,8100]]){
+          const part=await bash(p.requestId, `jq -c '[.data.alexandria[] | select(.data.symbol=="${a.sym}") | .data.bars[${x}:${y}][] | select(.close!=null) | (.timestamp_ms/86400000|floor), .close]' response.json`, B);
+          flat=flat.concat(part); if(part.length<5000) break; }
+        const arr=[]; for(let i=0;i+1<flat.length;i+=2) arr.push({d:dayStr(flat[i]), c:flat[i+1]});
+        if(arr.length){ S.hist[a.id]=arr; render(); } } };
+    if(p.delivery==="retained"){ try{ await pull(); } catch(e){ if(!res.cache) throw e; res=await fetchIt(true); p=parsed(res.payload); await pull(); } }
+    else p.data.alexandria.forEach(it=>{ if(it.data?.bars) S.hist[SYM2ID[it.data.symbol]]=it.data.bars.filter(b=>b.close!=null).map(b=>({d:b.date,c:b.close})); });
+    S.stamps.hist = res.cache?.storedAt || Date.now(); render();
+  }
+}
+function rebuild(){
+  for(const a of ASSETS){ const m=new Map();
+    (S.hist[a.id]||[]).forEach(x=>m.set(x.d,{d:x.d,h:x.c,l:x.c,c:x.c})); (S.daily[a.id]||[]).forEach(x=>m.set(x.d,x));
+    if(!m.size) continue; const arr=[...m.values()].sort((x,y)=>x.d<y.d?-1:1); S.full[a.id]=arr;
+    if(!S.hist[a.id]) continue; const w=new Map();
+    for(const x of arr){ const k=weekKey(x.d), o=w.get(k); if(!o) w.set(k,{d:k,h:x.h,l:x.l,c:x.c}); else { o.h=Math.max(o.h,x.h); o.l=Math.min(o.l,x.l); o.c=x.c; } }
+    S.weekly[a.id]=[...w.values()].slice(-522); }
+}
+
+/* ---------- trend-change signals + 20-year backtest ---------- */
+const COST=0.001;
+const RULES={short:[[5,20],[10,30],[10,50]], medium:[[20,100],[50,150],[50,200]], long:[[1,8],[1,10],[1,12]]};
+const FRESH={short:5, medium:15, long:1}, NEAR={short:0.004, medium:0.01, long:0.025};
+const ruleName=(h,[f,s])=> h==="short"? `EMA ${f}/${s} روزه` : h==="medium"? `میانگین ${f}/${s} روزه` : `قیمت و میانگین ${s} ماهه`;
+function seriesFor(id,h){ const f=S.full[id]; if(!f||!S.hist[id]) return null;
+  if(h!=="long") return f; const m=new Map(); f.forEach(x=>m.set(x.d.slice(0,7),x)); const arr=[...m.values()]; arr.pop(); return arr; }
+function maPair(c,h,[f,s]){ const fn = h==="short"? ema : sma; return [f===1? c : fn(c,f), fn(c,s)]; }
+function bt(ser,st,a,b){
+  let eq=1,bh=1,pk=1,pkb=1,dd=0,ddb=0,prev=0,entry=null; const tr=[];
+  for(let i=a;i<b-1;i++){ const r=ser[i+1].c/ser[i].c-1, pos=st[i]||0;
+    if(pos!==prev){ eq*=1-COST; if(pos) entry=ser[i].c; else if(entry!=null){ tr.push(ser[i].c/entry-1); entry=null; } prev=pos; }
+    if(pos) eq*=1+r; bh*=1+r; pk=Math.max(pk,eq); dd=Math.min(dd,eq/pk-1); pkb=Math.max(pkb,bh); ddb=Math.min(ddb,bh/pkb-1); }
+  if(entry!=null) tr.push(ser[b-1].c/entry-1);
+  const yrs=Math.max(0.5,(new Date(ser[b-1].d)-new Date(ser[a].d))/(365.25*864e5)); const cg=x=>(Math.pow(x,1/yrs)-1)*100;
+  const o={yrs,cagr:cg(eq),bh:cg(bh),dd:dd*100,ddb:ddb*100,n:tr.length,win:tr.length?tr.filter(x=>x>0).length/tr.length*100:0};
+  o.mar=o.cagr/Math.max(1,-o.dd); o.marb=o.bh/Math.max(1,-o.ddb); return o;
+}
+const memo=new Map();
+function signal(id,h){
+  const ser=seriesFor(id,h); if(!ser) return null; const n=ser.length; const key=id+h+n+ser[n-1].c; if(memo.has(key)) return memo.get(key);
+  const c=ser.map(x=>x.c); let best=null;
+  for(const rule of RULES[h]){ const [fa,sl]=maPair(c,h,rule); const st=c.map((_,i)=> sl[i]==null||fa[i]==null? null : (fa[i]>sl[i]?1:0));
+    const a=st.findIndex(v=>v!=null); if(a<0 || n-a < (h==="long"?36:500)) continue; const split=a+Math.floor((n-a)*0.7);
+    const IS=bt(ser,st,a,split); if(!best || IS.mar>best.IS.mar) best={rule,st,a,split,IS,fa,sl}; }
+  let out=null;
+  if(best){ const {st,a,split}=best; const OOS=bt(ser,st,split,n), ALL=bt(ser,st,a,n);
+    let j=n-1; while(j>a && st[j-1]===st[n-1]) j--;
+    const now=S.full[id][S.full[id].length-1].c;
+    const verdict = best.IS.mar>best.IS.marb && OOS.mar>OOS.marb ? 2 : ALL.mar>ALL.marb ? 1 : 0;
+    out={id,h,rule:best.rule,state:st[n-1],since:ser[j].d,at:ser[j].c,chg:(now/ser[j].c-1)*100,age:n-1-j,fresh:n-1-j<=FRESH[h],
+      gap: h==="long"? now/best.sl[n-1]-1 : best.fa[n-1]/best.sl[n-1]-1, IS:best.IS,OOS,ALL,verdict,from:ser[a].d};
+    out.near=Math.abs(out.gap)<NEAR[h]; }
+  memo.set(key,out); return out;
+}
+const VERD=['<span class="pill p-down">ضعیف</span>','<span class="pill p-flat">متوسط</span>','<span class="pill p-up">معتبر</span>'];
+const sigPill=g=> `<span class="pill ${g.state?"p-up":"p-down"}" style="${g.verdict?"":"opacity:.55"}">${g.state?"خرید":"فروش"}</span>`;
+function renderSignals(){
+  const TR=ASSETS.filter(a=>a.id!=="tnx"); const all=[]; const G={}; const mst=macroState();
+  TR.forEach(a=>{G[a.id]={}; ["short","medium","long"].forEach(h=>{const g=signal(a.id,h); G[a.id][h]=g; if(g) all.push(g);});});
+  if(!all.length){ $("fresh").innerHTML=`<div class="skel">${S.errs.hist? "تاریخچه ۲۰ ساله نرسید؛ «تازه‌سازی داده» را بزنید." : "سیگنال‌ها پس از رسیدن تاریخچه ۲۰ ساله محاسبه می‌شوند…"}</div>`; $("sigmx").innerHTML=""; $("btest").innerHTML=""; return; }
+  const fresh=all.filter(g=>g.fresh).sort((x,y)=>x.since<y.since?1:-1), near=all.filter(g=>g.near&&!g.fresh);
+  let f=`<h3>تغییرهای تازه روند</h3>`;
+  f+= fresh.length? fresh.map(g=>`<div class="sig ${g.state?"op":"th"}"><strong>${BYID[g.id].fa} · ${HZ[g.h]}:</strong> سیگنال ${g.state?"خرید":"فروش"} در <span class="num">${g.since}</span> روی ${fmt(g.at)} صادر شد (از آن زمان ${pct(g.chg)}). ${VERD[g.verdict]}</div>`).join("") : `<div class="sub">در روزهای اخیر تغییر روند تازه‌ای ثبت نشده است.</div>`;
+  if(near.length) f+=`<h3>در آستانه تغییر</h3>`+near.map(g=>`<div class="sig nt"><strong>${BYID[g.id].fa} · ${HZ[g.h]}:</strong> فاصله تا تغییر سیگنال به ${g.state?"فروش":"خرید"} فقط ${pct(Math.abs(g.gap)*100,2)} است. ${VERD[g.verdict]}</div>`).join("");
+  $("fresh").innerHTML=f;
+  const cell=g=> !g? '<td class="muted">تاریخچه کافی نیست</td>' : `<td>${sigPill(g)} ${g.fresh?'<span class="pill p-gold">تازه</span>':""}${g.near?'<span class="pill p-flat">آستانه تغییر</span>':""}<div class="sub">از <span class="num">${g.since}</span> · ${pct(g.chg)}${g.verdict?"":" · اعتبار ضعیف"}</div></td>`;
+  $("sigmx").innerHTML=`<thead><tr><th>بازار</th><th>کوتاه‌مدت</th><th>میان‌مدت</th><th>بلندمدت</th><th>شرایط نرخ بهره و تورم</th></tr></thead><tbody>`+TR.map(a=>{const w=macroWind(a.id,mst); return `<tr><td class="name">${a.fa}</td>${cell(G[a.id].short)}${cell(G[a.id].medium)}${cell(G[a.id].long)}<td>${windPill(w)}${w?`<div class="sub">۶ ماه بعد در این شرایط: ${pct((w.fed+w.inf)/2)} · معمول: ${pct(w.base)}</div><div class="sub">تأخیر اثر: نرخ بهره ${w.lf} ماه، تورم ${w.li} ماه</div>`:""}</td></tr>`;}).join("")+"</tbody>";
+  const h=S.btH; const two=(x,y)=>`${pct(x)} <span class="muted">در برابر</span> ${pct(y)}`;
+  $("btest").innerHTML=`<thead><tr><th>بازار</th><th>قاعده</th><th>از سال</th><th>معامله</th><th>موفق</th><th>بازده سالانه: سیگنال / نگهداری</th><th>بیشترین افت: سیگنال / نگهداری</th><th>۳۰٪ آخر: سیگنال / نگهداری</th><th>اعتبار</th></tr></thead><tbody>`+
+    TR.map(a=>{const g=G[a.id][h]; if(!g) return `<tr><td class="name">${a.fa}</td><td colspan="8" class="muted">تاریخچه کافی نیست</td></tr>`;
+      return `<tr><td class="name">${a.fa}</td><td>${ruleName(h,g.rule)}</td><td><span class="num">${g.from.slice(0,4)}</span></td><td><span class="num">${g.ALL.n}</span></td><td><span class="num">${Math.round(g.ALL.win)}%</span></td><td>${two(g.ALL.cagr,g.ALL.bh)}</td><td>${two(g.ALL.dd,g.ALL.ddb)}</td><td>${two(g.OOS.cagr,g.OOS.bh)}</td><td>${VERD[g.verdict]}</td></tr>`;}).join("")+"</tbody>";
+  $("b-tabs").querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",S.btH===b.dataset.h); b.onclick=()=>{S.btH=b.dataset.h; renderSignals();};});
+}
+/* ---------- Fed and inflation ---------- */
+const ymMap = arr => new Map((arr||[]).map(x=>[x.d.slice(0,7),x.v]));
+function yoyMap(arr){ const m=ymMap(arr), out=new Map(), ks=[...m.keys()].sort(); ks.forEach(k=>{ const p=(+k.slice(0,4)-1)+k.slice(4); if(m.has(p)) out.set(k,(m.get(k)/m.get(p)-1)*100); }); return out; }
+function prevYm(k,n){ let y=+k.slice(0,4), m=+k.slice(5,7)-n; while(m<1){m+=12;y--;} return y+"-"+String(m).padStart(2,"0"); }
+function regimeMap(m,thr){ const out=new Map(); for(const [k,v] of m){ const p=m.get(prevYm(k,6)); if(p==null) continue; const d=v-p; out.set(k, d>thr?2: d<-thr?0:1); } return out; }
+function lastOf(m){ const ks=[...m.keys()].sort(); const k=ks[ks.length-1]; return k? {k,v:m.get(k)} : null; }
+function macroState(){
+  const M=S.macro; const st={};
+  if(M.ff){ st.ffm=ymMap(M.ff); st.fedReg=regimeMap(st.ffm,0.2); st.ff=lastOf(st.ffm); st.fedNow=lastOf(st.fedReg); st.ff6=st.ffm.get(prevYm(st.ff.k,6)); }
+  if(M.cpi){ st.cpiY=yoyMap(M.cpi); st.infReg=regimeMap(st.cpiY,0.3); st.cpi=lastOf(st.cpiY); st.infNow=lastOf(st.infReg); st.cpi6=st.cpiY.get(prevYm(st.cpi.k,6)); }
+  return st;
+}
+function regimeStats(id,reg,lag){
+  const f=S.full[id]; if(!f||!S.hist[id]||!reg) return null; const m=new Map(); f.forEach(x=>m.set(x.d.slice(0,7),x.c)); const ks=[...m.keys()].sort();
+  const b=[[],[],[]], all=[];
+  for(let i=0;i+6<ks.length;i++){ const r=reg.get(prevYm(ks[i],lag)); const ret=(m.get(ks[i+6])/m.get(ks[i])-1)*100; all.push(ret); if(r!=null) b[r].push(ret); }
+  const avg=a=>a.length? a.reduce((s,v)=>s+v,0)/a.length : null;
+  return {cols:b.map(a=>({avg:avg(a),win:a.length?a.filter(v=>v>0).length/a.length*100:null,n:a.length})), base:avg(all)};
+}
+const FEDL=["کاهش نرخ","ثبات نرخ","افزایش نرخ"], INFL=["تورم رو به کاهش","تورم ثابت","تورم رو به افزایش"];
+function regimeTable(el,reg,lag,labels,cur){
+  const TR=ASSETS.filter(a=>a.id!=="tnx"); const rows=TR.map(a=>[a,regimeStats(a.id,reg,lag)]).filter(x=>x[1]);
+  if(!rows.length){ $(el).innerHTML="<tr><td class='skel'>در انتظار داده نرخ بهره، تورم و تاریخچه ۲۰ ساله…</td></tr>"; return; }
+  $(el).innerHTML=`<thead><tr><th class="rowh">بازار</th>${labels.map((l,i)=>`<th class="${i===cur?"cur":""}">${l}</th>`).join("")}<th>همه دوره‌ها</th></tr></thead><tbody>`+rows.map(([a,r])=>`<tr><td class="rowh">${a.fa}</td>${r.cols.map((c,i)=>`<td class="${i===cur?"cur":""}" style="background:${c.avg==null?"transparent":heatColor(Math.max(-1,Math.min(1,c.avg/(a.crypto?40:10))))}">${c.avg==null?"—":(c.avg>0?"+":"")+c.avg.toFixed(1)}<div style="font-size:10px;opacity:.75">${c.avg==null?"":Math.round(c.win)+"% · "+c.n+" ماه"}</div></td>`).join("")}<td>${(r.base>0?"+":"")+r.base.toFixed(1)}</td></tr>`).join("")+"</tbody>";
+}
+const LAGS=[0,3,6,9,12,18];
+function changeMap(m){ const out=new Map(); for(const [k,v] of m){ const p=m.get(prevYm(k,6)); if(p!=null) out.set(k,v-p); } return out; }
+const lagMemo=new Map();
+function bestLag(id,ch,minLag,tag){
+  const f=S.full[id]; if(!f||!S.hist[id]||!ch) return null; const key=id+tag+f.length+ch.size; if(lagMemo.has(key)) return lagMemo.get(key);
+  const m=new Map(); f.forEach(x=>m.set(x.d.slice(0,7),x.c)); const ks=[...m.keys()].sort(); let best=null;
+  for(const L of LAGS){ const lag=Math.max(L,minLag); const xs=[],ys=[];
+    for(let i=0;i+6<ks.length;i++){ const x=ch.get(prevYm(ks[i],lag)); if(x==null) continue; xs.push(x); ys.push(m.get(ks[i+6])/m.get(ks[i])-1); }
+    const c=corr(xs,ys); if(c!=null && (!best || Math.abs(c)>Math.abs(best.c))) best={L:lag,c,n:xs.length}; }
+  lagMemo.set(key,best); return best;
+}
+// tailwind / headwind for one asset: the Fed cycle and inflation direction that prevailed "best lag" months ago, judged by what followed historically
+function macroWind(id,st){ if(!st.fedNow||!st.infNow) return null;
+  const lf=bestLag(id,changeMap(st.ffm),0,"f"), li=bestLag(id,changeMap(st.cpiY),1,"i"); if(!lf||!li) return null;
+  const a=regimeStats(id,st.fedReg,lf.L), b=regimeStats(id,st.infReg,li.L); if(!a||!b) return null;
+  const nowK=S.full[id][S.full[id].length-1].d.slice(0,7); const rf=st.fedReg.get(prevYm(nowK,lf.L)) ?? st.fedNow.v, ri=st.infReg.get(prevYm(nowK,li.L)) ?? st.infNow.v;
+  const x=a.cols[rf], y=b.cols[ri]; if(x.avg==null||y.avg==null||x.n<12||y.n<12) return null;
+  const up=(x.avg>a.base)+(y.avg>b.base); return {w: up===2?1: up===0?-1:0, fed:x.avg, inf:y.avg, base:a.base, lf:lf.L, li:li.L}; }
+function renderLags(st){
+  const TR=ASSETS.filter(a=>a.id!=="tnx"); if(!st.ffm||!st.cpiY){ $("lagtab").innerHTML="<tr><td class='skel'>در انتظار داده نرخ بهره و تورم…</td></tr>"; return; }
+  const fch=changeMap(st.ffm), ich=changeMap(st.cpiY);
+  const say=(b,what)=> !b? "—" : Math.abs(b.c)<0.15? '<span class="muted">رابطه معنادار نیست</span>' : `${b.L===0?"بدون تأخیر":"حدود "+b.L+" ماه بعد"}: افزایش ${what} با ${b.c<0?"افت":"رشد"} بازار همراه بوده`;
+  const rows=TR.map(a=>[a,bestLag(a.id,fch,0,"f"),bestLag(a.id,ich,1,"i")]).filter(r=>r[1]||r[2]);
+  if(!rows.length){ $("lagtab").innerHTML="<tr><td class='skel'>در انتظار تاریخچه ۲۰ ساله…</td></tr>"; return; }
+  const cc=b=> b? `<span class="num">${b.L}m · ${b.c.toFixed(2)}</span>` : "—";
+  $("lagtab").innerHTML=`<thead><tr><th>بازار</th><th>نرخ بهره: تأخیر · همبستگی</th><th>برداشت</th><th>تورم: تأخیر · همبستگی</th><th>برداشت</th></tr></thead><tbody>`+rows.map(([a,f,i])=>`<tr><td class="name">${a.fa}</td><td>${cc(f)}</td><td>${say(f,"نرخ بهره")}</td><td>${cc(i)}</td><td>${say(i,"تورم")}</td></tr>`).join("")+"</tbody>";
+}
+function windPill(w){ return w==null? '<span class="muted">—</span>' : w.w>0? '<span class="pill p-up">موافق</span>' : w.w<0? '<span class="pill p-down">مخالف</span>' : '<span class="pill p-flat">خنثی</span>'; }
+function renderMacro(){
+  const M=S.macro, st=macroState(); const cards=[];
+  const none=k=> S.errs["macro:"+k]? "داده نرسید" : "در انتظار داده…";
+  if(st.ff){ const d=st.ff.v-(st.ff6??st.ff.v); const reg=st.fedNow? st.fedNow.v : 1;
+    cards.push(`<div class="card"><div class="kv"><h3>نرخ بهره فدرال رزرو</h3><span class="pill ${reg===0?"p-up":reg===2?"p-down":"p-flat"}">چرخه ${FEDL[reg]}</span></div><div class="kv"><span>نرخ مؤثر (میانگین ماه)</span><span class="num">${st.ff.v.toFixed(2)}%</span></div><div class="kv"><span>تغییر ۶ ماهه</span><span class="num">${(d>0?"+":"")+d.toFixed(2)}</span></div><div class="kv"><span>آخرین داده</span><span class="num">${st.ff.k}</span></div></div>`);
+    const y2=M.y2&&lastOf(ymMap(M.y2)); if(y2){ const sp=y2.v-st.ff.v;
+      cards.push(`<div class="card"><h3>انتظار بازار از مسیر نرخ</h3><div class="kv"><span>بازده ۲ ساله منهای نرخ فدرال</span><span class="num ${sp<0?"up":"down"}">${(sp>0?"+":"")+sp.toFixed(2)}</span></div><div class="sub">${sp<-0.25?"بازار کاهش نرخ را در ماه‌های آینده قیمت‌گذاری کرده است؛ معمولاً به نفع طلا و دارایی‌های پرریسک.": sp>0.25?"بازار افزایش نرخ را قیمت‌گذاری کرده است؛ معمولاً به نفع دلار و به ضرر طلا و سهام رشدی.":"بازار تغییر بزرگی در نرخ انتظار ندارد."}</div></div>`); }
+  } else cards.push(`<div class="card"><h3>نرخ بهره فدرال رزرو</h3><div class="skel">${none("ff")}</div></div>`);
+  if(st.cpi){ const d=st.cpi.v-(st.cpi6??st.cpi.v); const reg=st.infNow? st.infNow.v:1; const be=M.be&&lastOf(ymMap(M.be));
+    cards.push(`<div class="card"><div class="kv"><h3>تورم آمریکا (CPI)</h3><span class="pill ${reg===0?"p-up":reg===2?"p-down":"p-flat"}">${INFL[reg]}</span></div><div class="kv"><span>تورم سالانه</span><span class="num">${st.cpi.v.toFixed(1)}%</span></div><div class="kv"><span>شش ماه قبل</span><span class="num">${st.cpi6!=null?st.cpi6.toFixed(1)+"%":"—"}</span></div>${be?`<div class="kv"><span>انتظار تورمی بازار (5Y5Y)</span><span class="num">${be.v.toFixed(2)}%</span></div>`:""}<div class="kv"><span>آخرین داده</span><span class="num">${st.cpi.k}</span></div></div>`);
+    if(st.ff){ const real=st.ff.v-st.cpi.v;
+      cards.push(`<div class="card"><h3>نرخ بهره واقعی</h3><div class="kv"><span>نرخ فدرال منهای تورم</span><span class="num ${real>0?"down":"up"}">${(real>0?"+":"")+real.toFixed(2)}%</span></div><div class="sub">${real>1?"سیاست پولی انقباضی است: نگه‌داشتن پول نقد سود واقعی دارد و فشار روی طلا و دارایی‌های بدون بازده بیشتر است.": real<0?"نرخ واقعی منفی است: پول نقد ارزش از دست می‌دهد و به‌طور تاریخی به نفع طلا، نقره و کریپتو بوده.":"نرخ واقعی نزدیک صفر است و سیاست پولی تقریباً خنثی است."}</div></div>`); }
+  } else cards.push(`<div class="card"><h3>تورم آمریکا (CPI)</h3><div class="skel">${none("cpi")}</div></div>`);
+  const ez=M.ezcpi&&lastOf(yoyMap(M.ezcpi)), w=M.wcpi&&M.wcpi[M.wcpi.length-1];
+  cards.push(`<div class="card"><h3>تورم جهان</h3>${ez?`<div class="kv"><span>منطقه یورو، سالانه (${ez.k})</span><span class="num">${ez.v.toFixed(1)}%</span></div>`:""}${w?`<div class="kv"><span>میانگین جهان، سال ${w.d.slice(0,4)}</span><span class="num">${w.v.toFixed(1)}%</span></div>`:""}${st.cpi&&ez?`<div class="kv"><span>اختلاف آمریکا با یورو</span><span class="num">${(st.cpi.v-ez.v>0?"+":"")+(st.cpi.v-ez.v).toFixed(1)}</span></div>`:""}${!ez&&!w?`<div class="skel">${none("ezcpi")}</div>`:'<div class="sub">آمار تورم کل جهان را بانک جهانی فقط سالانه و با تأخیر منتشر می‌کند؛ تورم ماهانه منطقه یورو نماینده به‌روزتر خارج از آمریکاست.</div>'}</div>`);
+  $("macro").innerHTML=cards.join("");
+  regimeTable("fedtab", st.fedReg, 0, FEDL, st.fedNow? st.fedNow.v : -1);
+  regimeTable("inftab", st.infReg, 1, INFL, st.infNow? st.infNow.v : -1);
+  renderLags(st);
+}
+function showNotice(html, err){ const n=$("notice"); n.innerHTML=`<div class="notice ${err?"err":""}">${html}</div>`; n.hidden=false; }
+function errorCopy(e){
+  switch(e?.code){
+    case "server_not_connected": return "اتصال Firecrawl در حساب شما پیدا نشد. آن را در claude.ai از بخش Settings و سپس Connectors اضافه کنید و صفحه را دوباره باز کنید.";
+    case "needs_reauth": return "ورود به Firecrawl منقضی شده است. در claude.ai از بخش Settings و سپس Connectors دوباره به Firecrawl وصل شوید.";
+    case "selection_required": return "بیش از یک اتصال Firecrawl دارید. از پیامی که claude.ai نشان می‌دهد یکی را انتخاب کنید.";
+    case "not_in_manifest": case "approval_required": case "consent_required": return "این صفحه هنوز اجازه استفاده از Firecrawl را ندارد.";
+    case "blocked_by_policy": return "سیاست سازمان شما استفاده از Firecrawl را در این صفحه مسدود کرده است.";
+    case "server_unavailable": return "Firecrawl فعلاً پاسخ نمی‌دهد. چند دقیقه بعد «تازه‌سازی داده» را بزنید.";
+    case "tool_error": return "Firecrawl درخواست را اجرا کرد ولی خطا برگرداند: "+esc(e.message||"");
+    default: return "داده دریافت نشد ("+esc(e?.code||"خطای ناشناخته")+"). چند دقیقه بعد دوباره امتحان کنید.";
+  }
+}
+let loading=false;
+async function loadAll(force){
+  if(loading)return; loading=true; $("refresh").disabled=true; $("stamp").textContent="در حال دریافت داده…";
+  const names=["daily","house","macro","hist"]; const errs=[]; delete S.errs.hist;
+  await Promise.all(names.map(async n=>{
+    try{ if(n==="hist") await loadHist(); else await runBatch(n, force && n==="daily"); }
+    catch(e){ if(e?.retryable){ await new Promise(r=>setTimeout(r,(e.retryAfterMs||2500)+Math.random()*1500)); try{ if(n==="hist") await loadHist(); else await runBatch(n,force); return; }catch(e2){e=e2;} } if(n==="hist") S.errs.hist=1; errs.push(e); }
+    render();
+  }));
+  loading=false; $("refresh").disabled=false;
+  if(errs.length){ const e=errs[0]; const needsAsk=["not_in_manifest","approval_required","consent_required"].includes(e?.code);
+    showNotice(`<strong>${errorCopy(e)}</strong>${needsAsk?'<div><button class="primary" id="grant" type="button">اجازه دسترسی و بارگذاری داده</button></div>':''}`, true);
+    const g=$("grant"); if(g) g.onclick=()=>{ $("notice").hidden=true; loadAll(false); };
+  } else $("notice").hidden=true;
+  stamp();
+}
+function stamp(){ const t=S.stamps.daily; $("stamp").innerHTML = t? `آخرین داده قیمت: ${rel(t)}` : "هنوز داده‌ای دریافت نشده"; }
+
+/* ---------- render: summary ---------- */
+function renderSummary(){
+  const rows=ASSETS.map(a=>{
+    const d=S.daily[a.id]; if(!d||!d.length) return `<tr><td class="name">${a.fa}</td><td colspan="9" class="muted">${S.errs["daily:"+a.id]?"داده این بازار نرسید":"در حال بارگذاری…"}</td></tr>`;
+    const A={short:analyze(a.id,"short"),medium:analyze(a.id,"medium"),long:analyze(a.id,"long")};
+    const M=A.medium||A.short; const p=d[d.length-1].c;
+    return `<tr class="row ${S.asset===a.id?"sel":""}" tabindex="0" data-id="${a.id}">
+      <td class="name">${a.fa}<div class="sub" style="font-weight:400">${a.unit}</div></td>
+      <td>${fmt(p)}</td><td>${pct(chg(d,1))}</td><td>${pct(chg(d,a.crypto?7:5))}</td><td>${pct(chg(d,a.crypto?30:21))}</td>
+      <td>${A.short?trendPill(A.short.score):"—"}</td><td>${A.medium?trendPill(A.medium.score):"—"}</td><td>${A.long?trendPill(A.long.score):'<span class="muted">…</span>'}</td>
+      <td>${M&&M.sup[0]?fmt(M.sup[0].level):"—"}</td><td>${M&&M.res[0]?fmt(M.res[0].level):"—"}</td></tr>`;
+  }).join("");
+  $("summary").innerHTML=`<thead><tr><th>بازار</th><th>آخرین قیمت</th><th>روز</th><th>هفته</th><th>ماه</th><th>روند کوتاه</th><th>روند میان</th><th>روند بلند</th><th>نزدیک‌ترین کف</th><th>نزدیک‌ترین سقف</th></tr></thead><tbody>${rows}</tbody>`;
+  $("summary").querySelectorAll("tr.row").forEach(tr=>{ const go=()=>{S.asset=tr.dataset.id;render();$("s-detail").scrollIntoView({behavior:"smooth",block:"start"});};
+    tr.onclick=go; tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}}; });
+}
+
+/* ---------- render: detail chart ---------- */
+function svgChart(A){
+  const W=820,H=340,pl=8,pr=70,pt=14,pb=26; const b=A.b; const n=b.length;
+  const lv=[...A.sup,...A.res].map(x=>x.level);
+  let lo=Math.min(...b.map(x=>x.l),...lv), hi=Math.max(...b.map(x=>x.h),...lv); const pad=(hi-lo)*0.04; lo-=pad; hi+=pad;
+  const X=i=>pl+(W-pl-pr)*i/(n-1), Y=v=>pt+(H-pt-pb)*(1-(v-lo)/(hi-lo));
+  const path=arr=>{let s="",on=false;arr.forEach((v,i)=>{if(v==null){on=false;return;}s+=(on?"L":"M")+X(i).toFixed(1)+","+Y(v).toFixed(1);on=true;});return s;};
+  let g="";
+  for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4;const y=Y(v);g+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`+
+    `<text x="${W-pr+6}" y="${y+4}" font-size="11" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${(+v.toPrecision(5)).toLocaleString("en-US")}</text>`;}
+  [0,Math.floor(n/3),Math.floor(2*n/3),n-1].forEach(i=>{g+=`<text x="${X(i)}" y="${H-6}" font-size="11" fill="var(--muted)" text-anchor="${i===0?"start":i===n-1?"end":"middle"}" font-family="IBM Plex Mono,monospace">${b[i].d}</text>`;});
+  const band=(c,col,kind)=>{const y=Y(c.level);const t=Math.max(2,Math.min(10,(H-pt-pb)*A.atr*0.3/(hi-lo)));
+    return `<rect x="${pl}" width="${W-pl-pr}" y="${y-t/2}" height="${t}" fill="${col}" opacity="${0.12+0.05*Math.min(c.touches,4)}"/>`+
+      `<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="${col}" stroke-dasharray="5 4" stroke-width="1.2"/>`+
+      `<text x="${pl+4}" y="${y-5}" font-size="11" fill="${col}" font-family="IBM Plex Mono,monospace">${kind} ${(+c.level.toPrecision(5)).toLocaleString("en-US")} ×${c.touches}</text>`;};
+  A.sup.forEach(c=>g+=band(c,"var(--sup)","S")); A.res.forEach(c=>g+=band(c,"var(--res)","R"));
+  const area=path(b.map(x=>x.c))+`L${X(n-1)},${H-pb}L${X(0)},${H-pb}Z`;
+  g+=`<path d="${area}" fill="var(--gold)" opacity="0.06"/>`;
+  g+=`<path d="${path(A.m2)}" fill="none" stroke="var(--ma2)" stroke-width="1.5"/><path d="${path(A.m1)}" fill="none" stroke="var(--ma1)" stroke-width="1.5"/>`;
+  g+=`<path d="${path(b.map(x=>x.c))}" fill="none" stroke="var(--ink)" stroke-width="1.6"/>`;
+  g+=`<circle cx="${X(n-1)}" cy="${Y(A.price)}" r="4" fill="var(--gold)" stroke="var(--panel)" stroke-width="2"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" dir="ltr" role="img" aria-label="نمودار قیمت با کف و سقف">${g}</svg>`;
+}
+function renderDetail(){
+  $("a-tabs").innerHTML=ASSETS.map(a=>`<button class="tab" type="button" data-id="${a.id}" aria-pressed="${S.asset===a.id}">${a.fa}</button>`).join("");
+  $("a-tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.asset=b.dataset.id;render();});
+  $("h-tabs").querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",S.hz===b.dataset.h);b.onclick=()=>{S.hz=b.dataset.h;render();};});
+  const a=BYID[S.asset]; $("d-title").textContent=`${a.fa} · ${HZ[S.hz]}`;
+  const A=analyze(a.id,S.hz);
+  if(!A){ $("chart").className="skel"; $("chart").textContent = S.errs[(S.hz==="long"?"hist":"daily:"+a.id)]? "داده این بازار در این افق نرسید." : "در حال بارگذاری…"; $("side").innerHTML=""; return; }
+  $("chart").className="fade"; $("chart").innerHTML=svgChart(A);
+  const mlab = S.hz==="short"? ["EMA20","EMA50"] : S.hz==="medium"? ["میانگین ۵۰ روزه","میانگین ۲۰۰ روزه"] : ["میانگین ۴۰ هفته","میانگین ۲۰۰ هفته"];
+  $("lg1").textContent=mlab[0]; $("lg2").textContent=mlab[1];
+  const all=["short","medium","long"].map(h=>analyze(a.id,h));
+  const sigs=all.flatMap(signals);
+  const lvls=(arr,cls,lab)=> arr.length? arr.map(c=>`<div class="lvl"><span class="${cls}">${lab} ${fmt(c.level)}</span><span class="muted">${pct((c.level/A.price-1)*100)} · ${c.touches} برخورد</span></div>`).join("") : `<div class="lvl muted">سطح مشخصی در این دوره نیست</div>`;
+  $("side").innerHTML=`
+    <div class="card"><div class="kv"><span>روند ${HZ[S.hz]}</span>${trendPill(A.score)}</div>
+      <div class="sub">${HZ_DESC[S.hz]}</div>
+      <div class="kv"><span>قیمت</span>${fmt(A.price)}</div>
+      <div class="kv"><span>شیب روند (سالانه‌شده)</span>${pct(A.annual,0)}</div>
+      <div class="kv"><span>کیفیت روند (R²)</span><span class="num">${A.r2.toFixed(2)}</span></div>
+      <div class="kv"><span>جایگاه در دامنه دوره</span><span class="num">${Math.round(A.pos*100)}%</span></div>
+      <div class="bar"><b style="left:calc(${(A.pos*100).toFixed(1)}% - 2px)"></b></div>
+      <div class="kv"><span>RSI ۱۴</span><span class="num">${A.rsi!=null?A.rsi.toFixed(0):"—"}</span></div>
+      <div class="kv"><span>نوسان معمول (ATR)</span>${fmt(A.atr)}</div></div>
+    <div class="card"><h3>سقف‌ها (مقاومت)</h3>${lvls(A.res,"down","سقف")}<h3>کف‌ها (حمایت)</h3>${lvls(A.sup,"up","کف")}</div>
+    <div class="card"><h3>فرصت‌ها و تهدیدها در هر سه افق</h3>${sigs.length? sigs.map(([k,t])=>`<div class="sig ${k}">${t}</div>`).join("") : '<div class="sub">قیمت فعلاً دور از سطوح کلیدی است؛ سیگنال خاصی نیست.</div>'}</div>`;
+}
+
+/* ---------- intermarket ---------- */
+function dailyReturns(id){const b=S.daily[id];if(!b)return null;const m=new Map();for(let i=1;i<b.length;i++)m.set(b[i].d,Math.log(b[i].c/b[i-1].c));return m;}
+function weekKey(d){const t=new Date(d+"T00:00:00Z");const day=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-day);return t.toISOString().slice(0,10);}
+function weeklyReturns(id){const b=S.weekly[id];if(!b)return null;const m=new Map();for(let i=1;i<b.length;i++)m.set(weekKey(b[i].d),Math.log(b[i].c/b[i-1].c));return m;}
+function pairCorr(ma,mb,last){const ks=[...ma.keys()].filter(k=>mb.has(k)).sort().slice(-last);return corr(ks.map(k=>ma.get(k)),ks.map(k=>mb.get(k)));}
+function heatColor(v){ if(v==null)return "transparent"; const a=Math.min(Math.abs(v),1)*0.85; return v>0? `color-mix(in srgb, var(--up) ${a*100}%, transparent)` : `color-mix(in srgb, var(--down) ${a*100}%, transparent)`; }
+function renderCorr(){
+  const ids=ASSETS.map(a=>a.id).filter(id=>S.daily[id]); if(ids.length<3){$("corr").innerHTML="<tr><td class='skel'>در انتظار داده…</td></tr>";return;}
+  const R=Object.fromEntries(ids.map(id=>[id,dailyReturns(id)]));
+  let h=`<thead><tr><th class="rowh"></th>${ids.map(id=>`<th>${BYID[id].fa}</th>`).join("")}</tr></thead><tbody>`;
+  ids.forEach(a=>{h+=`<tr><td class="rowh">${BYID[a].fa}</td>`;ids.forEach(b=>{
+    if(a===b){h+=`<td class="muted">—</td>`;return;}
+    const v=pairCorr(R[a],R[b],S.corrW), s=pairCorr(R[a],R[b],60), l=pairCorr(R[a],R[b],240);
+    const brk = s!=null&&l!=null&&Math.sign(s)!==Math.sign(l)&&Math.abs(s)>0.2&&Math.abs(l)>0.2;
+    h+=`<td style="background:${heatColor(v)}" class="${brk?"cur":""}" title="${brk?"شکست رابطه":""}">${v==null?"—":v.toFixed(2)}</td>`;});h+="</tr>";});
+  $("corr").innerHTML=h+"</tbody>";
+  $("c-tabs").querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",S.corrW==b.dataset.w);b.onclick=()=>{S.corrW=+b.dataset.w;renderCorr();};});
+}
+const PAIRS=[["dxy","gold","دلار ← طلا"],["dxy","btc","دلار ← بیت‌کوین"],["tnx","gold","بازده اوراق ← طلا"],["tnx","ndx","بازده اوراق ← نزدک"],["oil","tnx","نفت ← بازده اوراق"],["spx","btc","S&P ← بیت‌کوین"],["gold","silver","طلا ← نقره"],["btc","eth","بیت‌کوین ← اتریوم"],["silver","gold","نقره ← طلا"]];
+function renderLeadLag(){
+  const rows=PAIRS.map(([a,b,lab])=>{const A=weeklyReturns(a),B=weeklyReturns(b);if(!A||!B)return null;
+    const ks=[...A.keys()].filter(k=>B.has(k)).sort().slice(-260); const xa=ks.map(k=>A.get(k)),xb=ks.map(k=>B.get(k));
+    let best={L:0,c:corr(xa,xb)}; const c0=best.c;
+    for(let L=1;L<=8;L++){const c=corr(xa.slice(0,-L),xb.slice(L));if(c!=null&&Math.abs(c)>Math.abs(best.c)+0.03)best={L,c};}
+    return {lab,c0,best};}).filter(Boolean);
+  if(!rows.length){$("leadlag").innerHTML="<tr><td class='skel'>در انتظار داده هفتگی…</td></tr>";return;}
+  $("leadlag").innerHTML=`<thead><tr><th>رابطه</th><th>هم‌زمان</th><th>بهترین تأخیر</th><th>برداشت</th></tr></thead><tbody>`+rows.map(r=>{
+    const c=r.best.c, weak=Math.abs(c)<0.15; const dir=c>0?"هم‌جهت":"خلاف جهت";
+    const txt= weak? "رابطه معنادار نیست" : r.best.L===0? `${dir}، بدون تأخیر` : `${dir}، بازار دوم حدود ${r.best.L} هفته بعد واکنش می‌دهد`;
+    return `<tr><td>${r.lab}</td><td><span class="num">${r.c0==null?"—":r.c0.toFixed(2)}</span></td><td><span class="num">${r.best.L}w · ${c.toFixed(2)}</span></td><td class="${weak?"muted":""}">${txt}</td></tr>`;}).join("")+"</tbody>";
+}
+function monthly(id){const b=S.weekly[id];if(!b)return null;const m=new Map();b.forEach(x=>m.set(x.d.slice(0,7),x.c));const ks=[...m.keys()].sort();
+  const out=[];for(let i=1;i<ks.length;i++)out.push({ym:ks[i],r:(m.get(ks[i])/m.get(ks[i-1])-1)*100});return out.slice(0,-1);}
+const MONTHS=["ژانویه","فوریه","مارس","آوریل","مه","ژوئن","ژوئیه","اوت","سپتامبر","اکتبر","نوامبر","دسامبر"];
+function renderSeason(){
+  const cur=new Date().getMonth(); const ids=ASSETS.map(a=>a.id).filter(id=>S.weekly[id]&&id!=="tnx");
+  if(!ids.length){$("season").innerHTML="<tr><td class='skel'>در انتظار داده هفتگی…</td></tr>";return;}
+  let h=`<thead><tr><th class="rowh">بازار</th>${MONTHS.map((m,i)=>`<th class="${i===cur?"cur":""}">${m}</th>`).join("")}</tr></thead><tbody>`;
+  ids.forEach(id=>{const mr=monthly(id);h+=`<tr><td class="rowh">${BYID[id].fa}</td>`;
+    for(let m=0;m<12;m++){const xs=mr.filter(x=>+x.ym.slice(5,7)===m+1).map(x=>x.r);const avg=xs.reduce((s,v)=>s+v,0)/(xs.length||1);const win=xs.filter(v=>v>0).length/(xs.length||1)*100;
+      h+=`<td class="${m===cur?"cur":""}" style="background:${heatColor(Math.max(-1,Math.min(1,avg/(BYID[id].crypto?15:4))))}">${xs.length?(avg>0?"+":"")+avg.toFixed(1):"—"}<div style="font-size:10px;opacity:.75">${xs.length?Math.round(win)+"%":""}</div></td>`;}
+    h+="</tr>";});
+  $("season").innerHTML=h+"</tbody>";
+}
+const RATIOS=[
+  ["gold","silver","نسبت طلا به نقره","بالا یعنی نقره نسبت به طلا ارزان است؛ برگشت از سقف تاریخی معمولاً به نفع نقره بوده."],
+  ["gold","oil","نسبت طلا به نفت","بالا یعنی نفت نسبت به طلا ارزان است یا بازار در حالت ترس و رکود است."],
+  ["spx","gold","نسبت S&P به طلا","صعودی یعنی ریسک‌پذیری و برتری سهام؛ نزولی یعنی فرار به دارایی امن."],
+  ["btc","gold","نسبت بیت‌کوین به طلا","صعودی یعنی بازار، طلای دیجیتال را به طلای فیزیکی ترجیح می‌دهد."],
+];
+function spark(vals){const W=240,H=44,lo=Math.min(...vals),hi=Math.max(...vals);const p=vals.map((v,i)=>`${i?"L":"M"}${(W*i/(vals.length-1)).toFixed(1)},${(H-2-(H-4)*(v-lo)/((hi-lo)||1)).toFixed(1)}`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" dir="ltr" aria-hidden="true"><path d="${p}" fill="none" stroke="var(--gold)" stroke-width="1.5"/></svg>`;}
+function renderRatios(){
+  $("ratios").innerHTML=RATIOS.map(([a,b,lab,note])=>{const A=S.weekly[a],B=S.weekly[b];
+    if(!A||!B)return `<div class="card ratio"><h3>${lab}</h3><div class="skel">در انتظار داده…</div></div>`;
+    const mb=new Map(B.map(x=>[weekKey(x.d),x.c]));const ser=A.map(x=>({k:weekKey(x.d),v:mb.has(weekKey(x.d))?x.c/mb.get(weekKey(x.d)):null})).filter(x=>x.v&&isFinite(x.v));
+    const vals=ser.map(x=>x.v); const cur=vals[vals.length-1]; const pr=vals.filter(v=>v<=cur).length/vals.length*100;
+    const ch=(cur/vals[Math.max(0,vals.length-14)]-1)*100;
+    const tag = pr>=85?'<span class="pill p-down">نزدیک سقف ۱۰ ساله</span>': pr<=15?'<span class="pill p-up">نزدیک کف ۱۰ ساله</span>':'<span class="pill p-flat">میانه دامنه</span>';
+    return `<div class="card ratio"><div class="kv"><h3>${lab}</h3>${tag}</div><div class="kv"><span class="big">${fmt(cur, cur<1?4:2)}</span><span>${pct(ch)} <span class="sub">در ۳ ماه</span></span></div>
+      ${spark(vals)}<div class="kv"><span>صدک در ۱۰ سال</span><span class="num">${Math.round(pr)}</span></div><div class="sub">${note}</div></div>`;}).join("");
+}
+
+/* ---------- housing ---------- */
+function yoy(arr,lag=12){return arr.slice(lag).map((x,i)=>({d:x.d,v:(x.v/arr[i].v-1)*100}));}
+function renderHouse(){
+  const hpi=S.house.hpi, mort=S.house.mort, st=S.house.starts;
+  if(!hpi||!mort){ $("house").innerHTML=`<div class="card"><div class="skel">${S.errs["house:hpi"]?"داده مسکن نرسید":"در انتظار داده FRED…"}</div></div>`; return; }
+  const hy=yoy(hpi); const last=hy[hy.length-1], prev=hy[hy.length-4];
+  const ml=mort[mort.length-1], m12=mort[mort.length-13];
+  const sy=st? yoy(st):null;
+  // lag between mortgage-rate change and house-price growth, in months
+  const mm=new Map(mort.map(x=>[x.d.slice(0,7),x.v])); const dm=[];const ks=[...mm.keys()].sort();
+  for(let i=12;i<ks.length;i++)dm.push({k:ks[i],v:mm.get(ks[i])-mm.get(ks[i-12])});
+  const hm=new Map(hy.map(x=>[x.d.slice(0,7),x.v])); let best={L:0,c:0};
+  for(let L=0;L<=24;L++){const xs=[],ys=[];dm.forEach((x,i)=>{const j=ks.indexOf(x.k);const tk=ks[j+L];if(tk&&hm.has(tk)){xs.push(x.v);ys.push(hm.get(tk));}});const c=corr(xs,ys);if(c!=null&&Math.abs(c)>Math.abs(best.c))best={L,c};}
+  const trend = last.v>prev.v? '<span class="pill p-up">رشد قیمت در حال شتاب</span>' : '<span class="pill p-down">رشد قیمت در حال کند شدن</span>';
+  $("house").innerHTML=`
+    <div class="card"><div class="kv"><h3>قیمت مسکن (Case-Shiller ملی)</h3>${trend}</div>
+      <div class="kv"><span>رشد سالانه</span>${pct(last.v)}</div><div class="kv"><span>سه ماه قبل</span>${pct(prev.v)}</div>
+      <div class="kv"><span>آخرین داده</span><span class="num">${last.d.slice(0,7)}</span></div></div>
+    <div class="card"><h3>نرخ وام مسکن ۳۰ ساله</h3>
+      <div class="kv"><span>آخرین ماه</span><span class="num">${ml.v.toFixed(2)}%</span></div>
+      <div class="kv"><span>تغییر ۱۲ ماهه</span><span class="num ${ml.v-m12.v>0?"down":"up"}">${(ml.v-m12.v>0?"+":"")+(ml.v-m12.v).toFixed(2)}</span></div>
+      <div class="sub">بیشترین اثر تغییر نرخ وام بر رشد قیمت مسکن حدود <strong class="num">${best.L}</strong> ماه بعد دیده می‌شود (همبستگی <span class="num">${best.c.toFixed(2)}</span>).</div></div>
+    <div class="card"><h3>شروع ساخت مسکن</h3>${sy?`<div class="kv"><span>آخرین ماه (هزار واحد سالانه)</span>${fmt(st[st.length-1].v,0)}</div><div class="kv"><span>نسبت به سال قبل</span>${pct(sy[sy.length-1].v)}</div><div class="kv"><span>آخرین داده</span><span class="num">${st[st.length-1].d.slice(0,7)}</span></div><div class="sub">شاخص پیشرو برای عرضه آینده و چرخه ساخت‌وساز.</div>`:'<div class="skel">داده نرسید</div>'}</div>`;
+  // dual chart
+  const W=820,H=240,pl=40,pr=40,pt=12,pb=24; const from=hy.findIndex(x=>x.d>="2010-01");const a=hy.slice(from);
+  const mo=a.map(x=>mm.get(x.d.slice(0,7))??null);
+  const lo1=Math.min(...a.map(x=>x.v)),hi1=Math.max(...a.map(x=>x.v)); const mv=mo.filter(v=>v!=null);const lo2=Math.min(...mv),hi2=Math.max(...mv);
+  const X=i=>pl+(W-pl-pr)*i/(a.length-1),Y1=v=>pt+(H-pt-pb)*(1-(v-lo1)/(hi1-lo1)),Y2=v=>pt+(H-pt-pb)*(1-(v-lo2)/(hi2-lo2));
+  let g=`<line x1="${pl}" x2="${W-pr}" y1="${Y1(0)}" y2="${Y1(0)}" stroke="var(--line)"/>`;
+  [lo1,0,hi1].forEach(v=>g+=`<text x="${pl-4}" y="${Y1(v)+4}" font-size="11" text-anchor="end" fill="var(--gold)" font-family="IBM Plex Mono,monospace">${v.toFixed(0)}%</text>`);
+  [lo2,hi2].forEach(v=>g+=`<text x="${W-pr+4}" y="${Y2(v)+4}" font-size="11" fill="var(--ma2)" font-family="IBM Plex Mono,monospace">${v.toFixed(1)}%</text>`);
+  [0,Math.floor(a.length/2),a.length-1].forEach(i=>g+=`<text x="${X(i)}" y="${H-6}" font-size="11" fill="var(--muted)" text-anchor="${i===0?"start":i===a.length-1?"end":"middle"}" font-family="IBM Plex Mono,monospace">${a[i].d.slice(0,7)}</text>`);
+  g+=`<path d="${a.map((x,i)=>(i?"L":"M")+X(i).toFixed(1)+","+Y1(x.v).toFixed(1)).join("")}" fill="none" stroke="var(--gold)" stroke-width="1.8"/>`;
+  let p="",on=false;mo.forEach((v,i)=>{if(v==null){on=false;return;}p+=(on?"L":"M")+X(i).toFixed(1)+","+Y2(v).toFixed(1);on=true;});
+  g+=`<path d="${p}" fill="none" stroke="var(--ma2)" stroke-width="1.5"/>`;
+  $("hchart").className="fade"; $("hchart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" dir="ltr" role="img" aria-label="رشد قیمت مسکن و نرخ وام">${g}</svg>`;
+}
+
+function render(){ try{rebuild();renderSummary();renderSignals();renderMacro();renderDetail();renderCorr();renderLeadLag();renderSeason();renderRatios();renderHouse();}catch(e){console.error(e);} }
+
+render();
+async function loadStatic(){
+  $("refresh").disabled=true; $("stamp").textContent="در حال دریافت داده…";
+  try{
+    const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status); const j=await r.json();
+    for(const a of ASSETS){ const x=j.assets&&j.assets[a.id]; if(!x){ S.errs["daily:"+a.id]="بدون داده"; continue; }
+      const h=[]; for(let i=0;i+1<x.hist.length;i+=2) h.push({d:dayStr(x.hist[i]),c:x.hist[i+1]}); S.hist[a.id]=h;
+      S.daily[a.id]=x.daily.map(b=>({d:b[0],o:b[3],h:b[1],l:b[2],c:b[3]})); delete S.errs["daily:"+a.id]; }
+    for(const name of ["house","macro"]) for(const k of FREDKEYS[name]){ const o=j.fred&&j.fred[k]; if(o) { S[name][k]=o.map(v=>({d:v[0],v:v[1]})); delete S.errs[name+":"+k]; } else S.errs[name+":"+k]="بدون داده"; }
+    S.stamps.daily=j.stamp*1000; $("notice").hidden=true;
+  }catch(e){ showNotice("<strong>فایل داده خوانده نشد.</strong><div>چند دقیقه بعد «تازه‌سازی داده» را بزنید. ("+esc(e.message)+")</div>", true); }
+  $("refresh").disabled=false; render(); stamp();
+}
+$("refresh").onclick=loadStatic;
+loadStatic(); setInterval(stamp,60000); setInterval(loadStatic,15*60000);
+// test hook for local checks only
+window.__mkt={S,analyze,render,bars};
+})();
+</script>
+
+</body>
+</html>
