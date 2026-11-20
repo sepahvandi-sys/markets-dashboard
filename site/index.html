@@ -503,14 +503,15 @@ function zones(cand,price,dir,minGap,maxDist,skip){
 function allocate(z,total,tilt){ if(!z.length) return; const raw=z.map((x,i)=>Math.sqrt(Math.min(x.w,5))*tilt[i]), sum=raw.reduce((a,b)=>a+b,0);
   z.forEach((x,i)=>x.pct=Math.max(5,Math.round(total*raw[i]/sum/5)*5)); let d=total-z.reduce((a,x)=>a+x.pct,0);
   const order=z.map((_,i)=>i).sort((i,j)=>raw[j]-raw[i]); let k=0; while(d!==0 && k<40){ const x=z[order[k%z.length]]; const step=d>0?5:-5; if(x.pct+step>=5){ x.pct+=step; d-=step; } k++; } }
-const planMemo=new Map();
+const planMemo=new Map(), LOOK=5;
 function plan(id,wind){
   const f=S.full[id]; if(!f||!S.hist[id]) return null; const n=f.length, key=id+n+f[n-1].c+(wind?wind.w:"x"); if(planMemo.has(key)) return planMemo.get(key);
   const A={short:analyze(id,"short"),medium:analyze(id,"medium"),long:analyze(id,"long")}; if(!A.medium){ return null; }
   const price=A.medium.price, a=A.medium.atr, cr=!!BYID[id].crypto; const cand=[], ext=[];
-  const add=(arr,p,w,src)=>{ if(p!=null&&isFinite(p)&&p>0) arr.push({p,w,src}); };
+  const add=(arr,p,w,src,fresh)=>{ if(p!=null&&isFinite(p)&&p>0) arr.push({p,w,src,fresh}); };
   for(const h of ["short","medium","long"]){ const X=A[h]; if(!X) continue; const tw=s=>SRCW[h]*(1+Math.min(s.touches-1,3)*0.25);
-    X.sup.forEach(s=>add(cand,s.level,tw(s),"کف "+HZ[h])); X.res.forEach(s=>add(cand,s.level,tw(s),"سقف "+HZ[h])); }
+    const fr=s=>s.last>=X.b.length-(h==="long"?2:LOOK);
+    X.sup.forEach(s=>add(cand,s.level,tw(s),"کف "+HZ[h],fr(s))); X.res.forEach(s=>add(cand,s.level,tw(s),"سقف "+HZ[h],fr(s))); }
   add(cand,A.medium.M1,1.2,"میانگین ۵۰ روزه"); add(cand,A.medium.M2,1.8,"میانگین ۲۰۰ روزه");
   const gl=signal(id,"long"), gm=signal(id,"medium");
   if(gl) add(cand,gl.line,2,`میانگین ${gl.rule[1]} ماهه`);
@@ -524,15 +525,29 @@ function plan(id,wind){
   const sg=g=> !g?0 : (g.state?1:-1)*(g.verdict?1:0.5);
   const C=2*sg(gl)+sg(gm)+(wind?wind.w:0), stance= C>=2?1 : C<=-2?-1 : 0;
   const buyTot=[40,70,100][stance+1], sellTot=[75,50,30][stance+1];
-  allocate(buys,buyTot, stance>0?[1.3,1,0.8,0.6] : stance<0?[0.5,0.8,1.1,1.4] : [1,1,1,1]);
-  allocate(sells,sellTot, stance>0?[0.6,0.9,1.2,1.4] : stance<0?[1.4,1.1,0.8,0.6] : [1,1,1,1]);
+  const tiltB= stance>0?[1.3,1,0.8,0.6] : stance<0?[0.5,0.8,1.1,1.4] : [1,1,1,1], tiltS= stance>0?[0.6,0.9,1.2,1.4] : stance<0?[1.4,1.1,0.8,0.6] : [1,1,1,1];
+  allocate(buys,buyTot,tiltB); allocate(sells,sellTot,tiltS);
+  // steps reached in the last few days: rebuild the ladder as it stood LOOK days ago (ignoring levels formed since) and see which steps price has touched
+  const hits=[], dly=S.daily[id];
+  if(dly && dly.length>LOOK+30){ const ref=dly[dly.length-1-LOOK].c, rec=dly.slice(-LOOK), old=cand.filter(x=>!x.fresh);
+    const rb=zones(old,ref,-1,minGap,cr?0.55:0.30,skip); let rs=zones(old,ref,1,minGap,cr?0.8:0.35,skip); if(rs.length<3) rs=zones(old.concat(ext),ref,1,minGap,cr?0.8:0.35,skip);
+    allocate(rb,buyTot,tiltB); allocate(rs,sellTot,tiltS);
+    rb.forEach((z,i)=>{ const b=rec.find(x=>x.l<=z.level); if(b) hits.push({buy:true,i,level:z.level,pct:z.pct,d:b.d,src:z.src}); });
+    rs.forEach((z,i)=>{ const b=rec.find(x=>x.h>=z.level); if(b) hits.push({buy:false,i,level:z.level,pct:z.pct,d:b.d,src:z.src}); }); }
+  const near=[]; if(buys[0] && price-buys[0].level<a) near.push({buy:true,z:buys[0]}); if(sells[0] && sells[0].level-price<a) near.push({buy:false,z:sells[0]});
   const st=gm? gm.st:null; [...buys,...sells].forEach(z=>{ z.dist=(z.level/price-1)*100; z.prob=reachProb(id,z.level/price,st); });
-  const out={id,price,stance,buys,sells,buyTot:buys.reduce((s,x)=>s+x.pct,0),sellTot:sells.reduce((s,x)=>s+x.pct,0),gl,gm,months:BYID[id].crypto?3:3};
+  const out={id,price,stance,hits,near,buys,sells,buyTot:buys.reduce((s,x)=>s+x.pct,0),sellTot:sells.reduce((s,x)=>s+x.pct,0),gl,gm,months:BYID[id].crypto?3:3};
   planMemo.set(key,out); return out;
 }
 const STANCE={"1":'<span class="pill p-up">خرید در اصلاح</span>',"0":'<span class="pill p-flat">خنثی و محتاط</span>',"-1":'<span class="pill p-down">فروش در رشد</span>'};
 function renderPlan(TR,mst){
   const P={}; TR.forEach(a=>P[a.id]=plan(a.id,macroWind(a.id,mst)));
+  let al=""; const nm=x=>BYID[x].fa;
+  TR.forEach(a=>{ const p=P[a.id]; if(!p) return;
+    p.hits.forEach(h=>{ al+=`<div class="sig ${h.buy?"op":"th"}"><strong>${nm(a.id)} · پله ${h.buy?"خرید":"فروش"} <span class="num">${h.i+1}</span> فعال شد:</strong> قیمت در <span class="num">${h.d}</span> به ${fmt(h.level)} رسید (قیمت فعلی ${fmt(p.price)}). سهم پیشنهادی این پله: <span class="num ${h.buy?"up":"down"}"><strong>${h.pct}%</strong></span> ${h.buy?"از پول این بازار":"از موجودی"} · <span class="sub">${h.src.slice(0,3).join(" · ")}</span></div>`; }); });
+  let nr=""; TR.forEach(a=>{ const p=P[a.id]; if(!p) return;
+    p.near.forEach(h=>{ nr+=`<div class="sig nt"><strong>${nm(a.id)} · نزدیک پله ${h.buy?"خرید":"فروش"} ۱:</strong> قیمت ${fmt(p.price)} است و تا ${fmt(h.z.level)} فقط ${pct(Math.abs(h.z.dist),2)} فاصله دارد. سهم این پله: <span class="num"><strong>${h.z.pct}%</strong></span></div>`; }); });
+  $("fresh").insertAdjacentHTML("afterbegin", `<h3>پله‌های خرید و فروش فعال‌شده (۵ روز اخیر)</h3>`+(al||`<div class="sub">در ۵ روز اخیر قیمت هیچ بازاری به پله‌های خرید یا فروش نرسیده است.</div>`)+(nr?`<h3>نزدیک به فعال شدن</h3>`+nr:""));
   const steps=(z,c)=> z.length? z.map(x=>`<span class="step ${c}">${fmt(x.level)} <b class="num">${x.pct}%</b></span>`).join("") : '<span class="muted">سطح مشخصی در این فاصله نیست</span>';
   $("ladmx").innerHTML=`<thead><tr><th>بازار</th><th>قیمت فعلی</th><th>رویکرد</th><th>پله‌های خرید (قیمت · سهم از پول کنار گذاشته)</th><th>پله‌های فروش (قیمت · سهم از موجودی)</th></tr></thead><tbody>`+
     TR.map(a=>{const p=P[a.id]; if(!p) return `<tr><td class="name">${a.fa}</td><td colspan="4" class="muted">تاریخچه کافی نیست</td></tr>`;
