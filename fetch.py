@@ -87,6 +87,7 @@ def asset(key, sym):
             continue
         try:
             out = fn()
+            out["source"] = name
             OK.add(name)
             print("ok", key, "via", name, flush=True)
             return out

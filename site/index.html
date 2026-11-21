@@ -106,11 +106,17 @@ svg{direction:ltr}
     </div>
     <div class="status">
       <span id="stamp" class="sub">در حال آماده‌سازی…</span>
-      <button id="refresh" type="button">تازه‌سازی داده</button>
+      <span id="refresh-status" role="status"></span><button id="refresh" type="button">تازه‌سازی داده</button>
     </div>
   </header>
 
-  <div id="notice" hidden></div>
+  <dialog id="refresh-auth"><form method="dialog">
+<h2>دریافت تازه از منابع</h2><p>GitHub برای شروع اجرای جدید به احراز هویت نیاز دارد. توکن محدود به همین مخزن با مجوز Actions: write فقط به api.github.com فرستاده می‌شود و تا بسته‌شدن تب در حافظه می‌ماند.</p>
+<label>توکن GitHub <input type="password" id="refresh-token" autocomplete="off"></label>
+<button value="start">شروع دریافت</button><button value="cancel">بستن</button>
+<a href="https://github.com/sepahvandi-sys/markets-dashboard/actions/workflows/update.yml" target="_blank" rel="noopener">اجرای دستی در GitHub</a>
+</form></dialog>
+<div id="notice" hidden></div>
 
   <section id="s-summary">
     <div class="sec-head">
@@ -120,7 +126,11 @@ svg{direction:ltr}
     <div class="scroll"><table id="summary"><tbody><tr><td class="skel">داده‌ها در حال بارگذاری هستند…</td></tr></tbody></table></div>
   </section>
 
-  <section id="s-signals">
+  <section><h2>کارنامهٔ سیگنال‌های ثبت‌شده از ۲۱ نوامبر ۲۰۲۶</h2>
+<p class="sub">برای هر ردیف، سرمایهٔ اولیه ۱۰۰ واحد است. خرید و خروج با قیمت پایانی اولین روز داده‌دار بعد از روز ثبت (UTC) و ۰٫۱٪ هزینه در هر سمت شبیه‌سازی می‌شوند. خرید و نگهداری هم از همان اولین روز واجد شرایط با همان هزینهٔ ورود آغاز می‌شود. ارزش روز شامل سود باز است. سیگنال ضعیف به معنی نگهداری نقد است.</p>
+<div class="scroll" id="performance">در انتظار دفتر ثبت…</div>
+<details><summary>تاریخچهٔ سیگنال‌ها و معاملات</summary><div class="scroll" id="journal"></div></details></section>
+<section id="s-signals">
     <div class="sec-head">
       <h2>هشدار تغییر روند و سیگنال خرید و فروش</h2>
       <span class="sub">هر سیگنال روی داده روزانه ۲۰ سال گذشته همان بازار آزموده شده است</span>
@@ -219,6 +229,8 @@ svg{direction:ltr}
   </div>
 </div>
 
+<script src="signal-engine.js"></script>
+<script src="performance.js"></script>
 <script>
 (() => {
 "use strict";
@@ -396,67 +408,8 @@ function rebuild(){
 }
 
 /* ---------- trend-change signals + 20-year backtest ---------- */
-const COST=0.001;
-const RULES={short:[[5,20],[10,30],[10,50]], medium:[[20,100],[50,150],[50,200]], long:[[1,8],[1,10],[1,12]]};
-const FRESH={short:5, medium:15, long:1}, NEAR={short:0.004, medium:0.01, long:0.025};
 const ruleName=(h,[f,s])=> h==="short"? `EMA ${f}/${s} روزه` : h==="medium"? `میانگین ${f}/${s} روزه` : `قیمت و میانگین ${s} ماهه`;
-function seriesFor(id,h){ const f=S.full[id]; if(!f||!S.hist[id]) return null;
-  if(h!=="long") return f; const m=new Map(); f.forEach(x=>m.set(x.d.slice(0,7),x)); const arr=[...m.values()]; arr.pop(); return arr; }
-function maPair(c,h,[f,s]){ const fn = h==="short"? ema : sma; return [f===1? c : fn(c,f), fn(c,s)]; }
-// Evaluate on daily closes, including signals formed on monthly closes.
-function bt(daily, series, states, start, end) {
-  let cursor = Math.max(0, start - 1);
-  const first = daily.findIndex(bar => bar.d >= series[start].d);
-  let equity = 1, peak = 1, drawdown = 0, holdPeak = 1, holdDrawdown = 0;
-  let position = 0, entry = 0, trades = 0, wins = 0;
-  const finish = series[end - 1].d;
-  for (let i = first; i < daily.length && daily[i].d <= finish; i++) {
-    const bar = daily[i];
-    if (i > first && position) equity *= bar.c / daily[i - 1].c;
-    while (cursor + 1 < end && series[cursor + 1].d < bar.d) cursor++;
-    const target = bar.d === finish ? 0 :
-      Number(series[cursor].d < bar.d && states[cursor] === 1);
-    if (target !== position) {
-      equity *= 1 - COST;
-      if (target) entry = bar.c;
-      else {
-        trades++;
-        if (bar.c / entry * (1 - COST) ** 2 > 1) wins++;
-      }
-      position = target;
-    }
-    const hold = bar.c / daily[first].c;
-    peak = Math.max(peak, equity);
-    drawdown = Math.min(drawdown, equity / peak - 1);
-    holdPeak = Math.max(holdPeak, hold);
-    holdDrawdown = Math.min(holdDrawdown, hold / holdPeak - 1);
-  }
-  const yrs = (Date.parse(finish) - Date.parse(series[start].d)) / (365.25 * 864e5);
-  const annual = value => 100 * (value ** (1 / yrs) - 1);
-  const result = {yrs, cagr: annual(equity), bh: annual(series[end-1].c / series[start].c),
-    dd: drawdown * 100, ddb: holdDrawdown * 100, n: trades, win: trades ? 100*wins/trades : 0};
-  result.mar = result.cagr / Math.max(1, -result.dd);
-  result.marb = result.bh / Math.max(1, -result.ddb);
-  return result;
-}
-const memo=new Map();
-function signal(id,h){
-  const ser=seriesFor(id,h); if(!ser) return null; const n=ser.length; const key=id+h+n+ser[n-1].c; if(memo.has(key)) return memo.get(key);
-  const c=ser.map(x=>x.c); let best=null;
-  for(const rule of RULES[h]){ const [fa,sl]=maPair(c,h,rule); const st=c.map((_,i)=> sl[i]==null||fa[i]==null? null : (fa[i]>sl[i]?1:0));
-    const a=Math.max(...RULES[h].map(pair=>pair[1]))-1; if(a<0 || n-a < (h==="long"?36:500)) continue; const split=a+Math.floor((n-a)*0.7);
-    const IS=bt(S.full[id],ser,st,a,split); if(!best || IS.mar>best.IS.mar) best={rule,st,a,split,IS,fa,sl}; }
-  let out=null;
-  if(best){ const {st,a,split}=best; const OOS=bt(S.full[id],ser,st,split,n), ALL=bt(S.full[id],ser,st,a,n);
-    let j=n-1; while(j>a && st[j-1]===st[n-1]) j--;
-    const now=S.full[id][S.full[id].length-1].c;
-    const verdict = OOS.n >= 3 && OOS.cagr > 0 && OOS.mar > OOS.marb ? (OOS.cagr > OOS.bh ? 2 : 1) : 0;
-    out={id,h,rule:best.rule,state:st[n-1],since:ser[j].d,at:ser[j].c,chg:(now/ser[j].c-1)*100,age:n-1-j,fresh:n-1-j<=FRESH[h],
-      gap: h==="long"? now/best.sl[n-1]-1 : best.fa[n-1]/best.sl[n-1]-1, IS:best.IS,OOS,ALL,verdict,from:ser[a].d,st,line:best.sl[n-1]};
-    out.near=Math.abs(out.gap)<NEAR[h]; }
-  memo.set(key,out); return out;
-}
-
+const {signal,memo}=createSignalEngine(S);
 /* ---------- time-price waves: deviation from the 1-year average, with a fitted sine ---------- */
 const CYC=[["gold","طلا","var(--gold)"],["silver","نقره","var(--sup)"],["bond","قیمت اوراق ۱۰ ساله","var(--ma2)"],["btc","بیت‌کوین","var(--down)"]];
 function cycSeries(id){ const w=S.weekly[id==="bond"?"tnx":id]; if(!w||w.length<130) return null;
@@ -706,7 +659,7 @@ async function loadAll(force){
   } else $("notice").hidden=true;
   stamp();
 }
-function stamp(){ const t=S.stamps.daily; $("stamp").innerHTML = t? `آخرین داده قیمت: ${rel(t)}` : "هنوز داده‌ای دریافت نشده"; }
+function stamp(){ const t=S.stamps.daily; $("stamp").innerHTML = t? `آخرین دریافت سرور: ${rel(t)}` : "هنوز داده‌ای دریافت نشده"; }
 
 /* ---------- render: summary ---------- */
 function renderSummary(){
@@ -887,13 +840,14 @@ async function loadStatic(){
       const h=[]; for(let i=0;i+1<x.hist.length;i+=2) h.push({d:dayStr(x.hist[i]),c:x.hist[i+1]}); S.hist[a.id]=h;
       S.daily[a.id]=x.daily.map(b=>({d:b[0],o:b[3],h:b[1],l:b[2],c:b[3]})); delete S.errs["daily:"+a.id]; }
     for(const name of ["house","macro"]) for(const k of FREDKEYS[name]){ const o=j.fred&&j.fred[k]; if(o) { S[name][k]=o.map(v=>({d:v[0],v:v[1]})); delete S.errs[name+":"+k]; } else S.errs[name+":"+k]="بدون داده"; }
-    memo.clear(); planMemo.clear();
+    renderLedger(j.ledger);
+    memo.clear(); planMemo.clear(); fwdMemo.clear(); lagMemo.clear();
     S.stamps.daily=j.stamp*1000; $("notice").hidden=true;
   }catch(e){ showNotice("<strong>فایل داده خوانده نشد.</strong><div>چند دقیقه بعد «تازه‌سازی داده» را بزنید. ("+esc(e.message)+")</div>", true); }
   $("refresh").disabled=false; render(); stamp();
 }
-$("refresh").onclick=loadStatic;
-loadStatic(); setInterval(stamp,60000); setInterval(loadStatic,15*60000);
+wireRefresh(loadStatic);
+loadStatic(); setInterval(stamp,60000); setInterval(()=>{if(!$("refresh").disabled)loadStatic()},15*60000);
 // test hook for local checks only
 window.__mkt={S,analyze,render,bars};
 })();
