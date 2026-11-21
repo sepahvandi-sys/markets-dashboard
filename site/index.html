@@ -135,7 +135,7 @@ svg{direction:ltr}
       <div class="sec-head"><h3>کارنامه ۲۰ ساله هر سیگنال</h3>
         <div class="tabs" id="b-tabs"><button class="tab" type="button" data-h="short" aria-pressed="false">کوتاه‌مدت</button><button class="tab" type="button" data-h="medium" aria-pressed="true">میان‌مدت</button><button class="tab" type="button" data-h="long" aria-pressed="false">بلندمدت</button></div></div>
       <div class="scroll" style="border:none"><table id="btest"></table></div>
-      <div class="sub">روش: «خرید» یعنی میانگین سریع بالای میانگین کند رفته و روند صعودی شده؛ «فروش» یعنی برعکس و خروج به نقد (بدون فروش استقراضی). ستون «شرایط نرخ بهره و تورم» می‌گوید چرخه فدرال و جهت تورم، با در نظر گرفتن تأخیری که اثرشان به آن بازار می‌رسد، در ۲۰ سال گذشته برای آن بازار موافق بوده یا مخالف؛ سیگنال خرید در شرایط مخالف را با احتیاط بیشتری بگیرید. معامله یک روز بعد از سیگنال و با ۰٫۱٪ هزینه در هر جابه‌جایی حساب شده است. برای هر بازار از بین سه قاعده، بهترین روی ۷۰٪ اول تاریخچه انتخاب و روی ۳۰٪ آخر که در انتخاب نقشی نداشته دوباره سنجیده شده است. «معتبر» یعنی نسبت بازده به بیشترین افت در هر دو بخش از خرید و نگهداری بهتر بوده؛ «متوسط» یعنی فقط در کل دوره بهتر بوده؛ «ضعیف» یعنی سیگنال برتری نداشته و فقط برای اطلاع است. تاریخچه بیت‌کوین از ۲۰۱۴ و اتریوم از ۲۰۱۷ شروع می‌شود. عملکرد گذشته تضمین آینده نیست.</div>
+      <div class="sub">روش: «خرید» یعنی میانگین سریع بالای میانگین کند رفته و روند صعودی شده؛ «فروش» یعنی برعکس و خروج به نقد (بدون فروش استقراضی). ستون «شرایط نرخ بهره و تورم» می‌گوید چرخه فدرال و جهت تورم، با در نظر گرفتن تأخیری که اثرشان به آن بازار می‌رسد، در ۲۰ سال گذشته برای آن بازار موافق بوده یا مخالف؛ سیگنال خرید در شرایط مخالف را با احتیاط بیشتری بگیرید. معامله در قیمت پایانی اولین روز داده‌دار بعد از سیگنال و با ۰٫۱٪ هزینه در هر جابه‌جایی حساب شده است. برای هر بازار از بین سه قاعده، بهترین روی ۷۰٪ اول تاریخچه انتخاب و روی ۳۰٪ آخر که در انتخاب نقشی نداشته دوباره سنجیده شده است. اعتبار بر پایهٔ ۳۰٪ پایانی است. حداقل سه معامله، بازده مثبت و نسبت بازده به افت بهتر از نگهداری لازم است. اگر بازده سالانه هم از نگهداری بیشتر باشد، برچسب «معتبر» می‌گیرد. افت سرمایه با قیمت‌های پایانی روزانه و بازده نگهداری بدون هزینه سنجیده شده است. تاریخچه بیت‌کوین از ۲۰۱۴ و اتریوم از ۲۰۱۷ شروع می‌شود. عملکرد گذشته تضمین آینده نیست.</div>
     </div>
   </section>
 
@@ -403,28 +403,54 @@ const ruleName=(h,[f,s])=> h==="short"? `EMA ${f}/${s} روزه` : h==="medium"?
 function seriesFor(id,h){ const f=S.full[id]; if(!f||!S.hist[id]) return null;
   if(h!=="long") return f; const m=new Map(); f.forEach(x=>m.set(x.d.slice(0,7),x)); const arr=[...m.values()]; arr.pop(); return arr; }
 function maPair(c,h,[f,s]){ const fn = h==="short"? ema : sma; return [f===1? c : fn(c,f), fn(c,s)]; }
-function bt(ser,st,a,b){
-  let eq=1,bh=1,pk=1,pkb=1,dd=0,ddb=0,prev=0,entry=null; const tr=[];
-  for(let i=a;i<b-1;i++){ const r=ser[i+1].c/ser[i].c-1, pos=st[i]||0;
-    if(pos!==prev){ eq*=1-COST; if(pos) entry=ser[i].c; else if(entry!=null){ tr.push(ser[i].c/entry-1); entry=null; } prev=pos; }
-    if(pos) eq*=1+r; bh*=1+r; pk=Math.max(pk,eq); dd=Math.min(dd,eq/pk-1); pkb=Math.max(pkb,bh); ddb=Math.min(ddb,bh/pkb-1); }
-  if(entry!=null) tr.push(ser[b-1].c/entry-1);
-  const yrs=Math.max(0.5,(new Date(ser[b-1].d)-new Date(ser[a].d))/(365.25*864e5)); const cg=x=>(Math.pow(x,1/yrs)-1)*100;
-  const o={yrs,cagr:cg(eq),bh:cg(bh),dd:dd*100,ddb:ddb*100,n:tr.length,win:tr.length?tr.filter(x=>x>0).length/tr.length*100:0};
-  o.mar=o.cagr/Math.max(1,-o.dd); o.marb=o.bh/Math.max(1,-o.ddb); return o;
+// Evaluate on daily closes, including signals formed on monthly closes.
+function bt(daily, series, states, start, end) {
+  let cursor = Math.max(0, start - 1);
+  const first = daily.findIndex(bar => bar.d >= series[start].d);
+  let equity = 1, peak = 1, drawdown = 0, holdPeak = 1, holdDrawdown = 0;
+  let position = 0, entry = 0, trades = 0, wins = 0;
+  const finish = series[end - 1].d;
+  for (let i = first; i < daily.length && daily[i].d <= finish; i++) {
+    const bar = daily[i];
+    if (i > first && position) equity *= bar.c / daily[i - 1].c;
+    while (cursor + 1 < end && series[cursor + 1].d < bar.d) cursor++;
+    const target = bar.d === finish ? 0 :
+      Number(series[cursor].d < bar.d && states[cursor] === 1);
+    if (target !== position) {
+      equity *= 1 - COST;
+      if (target) entry = bar.c;
+      else {
+        trades++;
+        if (bar.c / entry * (1 - COST) ** 2 > 1) wins++;
+      }
+      position = target;
+    }
+    const hold = bar.c / daily[first].c;
+    peak = Math.max(peak, equity);
+    drawdown = Math.min(drawdown, equity / peak - 1);
+    holdPeak = Math.max(holdPeak, hold);
+    holdDrawdown = Math.min(holdDrawdown, hold / holdPeak - 1);
+  }
+  const yrs = (Date.parse(finish) - Date.parse(series[start].d)) / (365.25 * 864e5);
+  const annual = value => 100 * (value ** (1 / yrs) - 1);
+  const result = {yrs, cagr: annual(equity), bh: annual(series[end-1].c / series[start].c),
+    dd: drawdown * 100, ddb: holdDrawdown * 100, n: trades, win: trades ? 100*wins/trades : 0};
+  result.mar = result.cagr / Math.max(1, -result.dd);
+  result.marb = result.bh / Math.max(1, -result.ddb);
+  return result;
 }
 const memo=new Map();
 function signal(id,h){
   const ser=seriesFor(id,h); if(!ser) return null; const n=ser.length; const key=id+h+n+ser[n-1].c; if(memo.has(key)) return memo.get(key);
   const c=ser.map(x=>x.c); let best=null;
   for(const rule of RULES[h]){ const [fa,sl]=maPair(c,h,rule); const st=c.map((_,i)=> sl[i]==null||fa[i]==null? null : (fa[i]>sl[i]?1:0));
-    const a=st.findIndex(v=>v!=null); if(a<0 || n-a < (h==="long"?36:500)) continue; const split=a+Math.floor((n-a)*0.7);
-    const IS=bt(ser,st,a,split); if(!best || IS.mar>best.IS.mar) best={rule,st,a,split,IS,fa,sl}; }
+    const a=Math.max(...RULES[h].map(pair=>pair[1]))-1; if(a<0 || n-a < (h==="long"?36:500)) continue; const split=a+Math.floor((n-a)*0.7);
+    const IS=bt(S.full[id],ser,st,a,split); if(!best || IS.mar>best.IS.mar) best={rule,st,a,split,IS,fa,sl}; }
   let out=null;
-  if(best){ const {st,a,split}=best; const OOS=bt(ser,st,split,n), ALL=bt(ser,st,a,n);
+  if(best){ const {st,a,split}=best; const OOS=bt(S.full[id],ser,st,split,n), ALL=bt(S.full[id],ser,st,a,n);
     let j=n-1; while(j>a && st[j-1]===st[n-1]) j--;
     const now=S.full[id][S.full[id].length-1].c;
-    const verdict = best.IS.mar>best.IS.marb && OOS.mar>OOS.marb ? 2 : ALL.mar>ALL.marb ? 1 : 0;
+    const verdict = OOS.n >= 3 && OOS.cagr > 0 && OOS.mar > OOS.marb ? (OOS.cagr > OOS.bh ? 2 : 1) : 0;
     out={id,h,rule:best.rule,state:st[n-1],since:ser[j].d,at:ser[j].c,chg:(now/ser[j].c-1)*100,age:n-1-j,fresh:n-1-j<=FRESH[h],
       gap: h==="long"? now/best.sl[n-1]-1 : best.fa[n-1]/best.sl[n-1]-1, IS:best.IS,OOS,ALL,verdict,from:ser[a].d,st,line:best.sl[n-1]};
     out.near=Math.abs(out.gap)<NEAR[h]; }
@@ -522,32 +548,23 @@ function plan(id,wind){
   const minGap=Math.max(a*2,price*(cr?0.04:0.02)), skip=a*0.3;
   const buys=zones(cand,price,-1,minGap,cr?0.55:0.30,skip);
   let sells=zones(cand,price,1,minGap,cr?0.8:0.35,skip); if(sells.length<3) sells=zones(cand.concat(ext),price,1,minGap,cr?0.8:0.35,skip);
-  const sg=g=> !g?0 : (g.state?1:-1)*(g.verdict?1:0.5);
+  const sg=g=> !g?0 : (g.state?1:-1)*(g.verdict/2);
   const C=2*sg(gl)+sg(gm)+(wind?wind.w:0), stance= C>=2?1 : C<=-2?-1 : 0;
   const buyTot=[40,70,100][stance+1], sellTot=[75,50,30][stance+1];
   const tiltB= stance>0?[1.3,1,0.8,0.6] : stance<0?[0.5,0.8,1.1,1.4] : [1,1,1,1], tiltS= stance>0?[0.6,0.9,1.2,1.4] : stance<0?[1.4,1.1,0.8,0.6] : [1,1,1,1];
   allocate(buys,buyTot,tiltB); allocate(sells,sellTot,tiltS);
-  // steps reached in the last few days: rebuild the ladder as it stood LOOK days ago (ignoring levels formed since) and see which steps price has touched
-  const hits=[], dly=S.daily[id];
-  if(dly && dly.length>LOOK+30){ const ref=dly[dly.length-1-LOOK].c, rec=dly.slice(-LOOK), old=cand.filter(x=>!x.fresh);
-    const rb=zones(old,ref,-1,minGap,cr?0.55:0.30,skip); let rs=zones(old,ref,1,minGap,cr?0.8:0.35,skip); if(rs.length<3) rs=zones(old.concat(ext),ref,1,minGap,cr?0.8:0.35,skip);
-    allocate(rb,buyTot,tiltB); allocate(rs,sellTot,tiltS);
-    rb.forEach((z,i)=>{ const b=rec.find(x=>x.l<=z.level); if(b) hits.push({buy:true,i,level:z.level,pct:z.pct,d:b.d,src:z.src}); });
-    rs.forEach((z,i)=>{ const b=rec.find(x=>x.h>=z.level); if(b) hits.push({buy:false,i,level:z.level,pct:z.pct,d:b.d,src:z.src}); }); }
   const near=[]; if(buys[0] && price-buys[0].level<a) near.push({buy:true,z:buys[0]}); if(sells[0] && sells[0].level-price<a) near.push({buy:false,z:sells[0]});
   const st=gm? gm.st:null; [...buys,...sells].forEach(z=>{ z.dist=(z.level/price-1)*100; z.prob=reachProb(id,z.level/price,st); });
-  const out={id,price,stance,hits,near,buys,sells,buyTot:buys.reduce((s,x)=>s+x.pct,0),sellTot:sells.reduce((s,x)=>s+x.pct,0),gl,gm,months:BYID[id].crypto?3:3};
+  const out={id,price,stance,near,buys,sells,buyTot:buys.reduce((s,x)=>s+x.pct,0),sellTot:sells.reduce((s,x)=>s+x.pct,0),gl,gm,months:BYID[id].crypto?3:3};
   planMemo.set(key,out); return out;
 }
 const STANCE={"1":'<span class="pill p-up">خرید در اصلاح</span>',"0":'<span class="pill p-flat">خنثی و محتاط</span>',"-1":'<span class="pill p-down">فروش در رشد</span>'};
 function renderPlan(TR,mst){
   const P={}; TR.forEach(a=>P[a.id]=plan(a.id,macroWind(a.id,mst)));
-  let al=""; const nm=x=>BYID[x].fa;
-  TR.forEach(a=>{ const p=P[a.id]; if(!p) return;
-    p.hits.forEach(h=>{ al+=`<div class="sig ${h.buy?"op":"th"}"><strong>${nm(a.id)} · پله ${h.buy?"خرید":"فروش"} <span class="num">${h.i+1}</span> فعال شد:</strong> قیمت در <span class="num">${h.d}</span> به ${fmt(h.level)} رسید (قیمت فعلی ${fmt(p.price)}). سهم پیشنهادی این پله: <span class="num ${h.buy?"up":"down"}"><strong>${h.pct}%</strong></span> ${h.buy?"از پول این بازار":"از موجودی"} · <span class="sub">${h.src.slice(0,3).join(" · ")}</span></div>`; }); });
+  const nm=x=>BYID[x].fa;
   let nr=""; TR.forEach(a=>{ const p=P[a.id]; if(!p) return;
     p.near.forEach(h=>{ nr+=`<div class="sig nt"><strong>${nm(a.id)} · نزدیک پله ${h.buy?"خرید":"فروش"} ۱:</strong> قیمت ${fmt(p.price)} است و تا ${fmt(h.z.level)} فقط ${pct(Math.abs(h.z.dist),2)} فاصله دارد. سهم این پله: <span class="num"><strong>${h.z.pct}%</strong></span></div>`; }); });
-  $("fresh").insertAdjacentHTML("afterbegin", `<h3>پله‌های خرید و فروش فعال‌شده (۵ روز اخیر)</h3>`+(al||`<div class="sub">در ۵ روز اخیر قیمت هیچ بازاری به پله‌های خرید یا فروش نرسیده است.</div>`)+(nr?`<h3>نزدیک به فعال شدن</h3>`+nr:""));
+  if(nr) $("fresh").insertAdjacentHTML("afterbegin", "<h3>نزدیک به پلهٔ فعلی</h3>"+nr);
   const steps=(z,c)=> z.length? z.map(x=>`<span class="step ${c}">${fmt(x.level)} <b class="num">${x.pct}%</b></span>`).join("") : '<span class="muted">سطح مشخصی در این فاصله نیست</span>';
   $("ladmx").innerHTML=`<thead><tr><th>بازار</th><th>قیمت فعلی</th><th>رویکرد</th><th>پله‌های خرید (قیمت · سهم از پول کنار گذاشته)</th><th>پله‌های فروش (قیمت · سهم از موجودی)</th></tr></thead><tbody>`+
     TR.map(a=>{const p=P[a.id]; if(!p) return `<tr><td class="name">${a.fa}</td><td colspan="4" class="muted">تاریخچه کافی نیست</td></tr>`;
@@ -568,12 +585,12 @@ function renderPlan(TR,mst){
     ${rule?`<div class="sig nt">${rule}</div>`:""}</div>`;
 }
 const VERD=['<span class="pill p-down">ضعیف</span>','<span class="pill p-flat">متوسط</span>','<span class="pill p-up">معتبر</span>'];
-const sigPill=g=> `<span class="pill ${g.state?"p-up":"p-down"}" style="${g.verdict?"":"opacity:.55"}">${g.state?"خرید":"فروش"}</span>`;
+const sigPill=g=> !g.verdict ? '<span class="pill p-flat">بدون سیگنال معتبر</span>' : `<span class="pill ${g.state?"p-up":"p-down"}" style="${g.verdict?"":"opacity:.55"}">${g.state?"خرید":"فروش"}</span>`;
 function renderSignals(){
   const TR=ASSETS.filter(a=>a.id!=="tnx"); const all=[]; const G={}; const mst=macroState();
   TR.forEach(a=>{G[a.id]={}; ["short","medium","long"].forEach(h=>{const g=signal(a.id,h); G[a.id][h]=g; if(g) all.push(g);});});
   if(!all.length){ $("fresh").innerHTML=`<div class="skel">${S.errs.hist? "تاریخچه ۲۰ ساله نرسید؛ «تازه‌سازی داده» را بزنید." : "سیگنال‌ها پس از رسیدن تاریخچه ۲۰ ساله محاسبه می‌شوند…"}</div>`; $("sigmx").innerHTML=""; $("btest").innerHTML=""; return; }
-  const fresh=all.filter(g=>g.fresh).sort((x,y)=>x.since<y.since?1:-1), near=all.filter(g=>g.near&&!g.fresh);
+  const fresh=all.filter(g=>g.fresh && g.verdict).sort((x,y)=>x.since<y.since?1:-1), near=all.filter(g=>g.near&&!g.fresh && g.verdict);
   let f=`<h3>تغییرهای تازه روند</h3>`;
   f+= fresh.length? fresh.map(g=>`<div class="sig ${g.state?"op":"th"}"><strong>${BYID[g.id].fa} · ${HZ[g.h]}:</strong> سیگنال ${g.state?"خرید":"فروش"} در <span class="num">${g.since}</span> روی ${fmt(g.at)} صادر شد (از آن زمان ${pct(g.chg)}). ${VERD[g.verdict]}</div>`).join("") : `<div class="sub">در روزهای اخیر تغییر روند تازه‌ای ثبت نشده است.</div>`;
   if(near.length) f+=`<h3>در آستانه تغییر</h3>`+near.map(g=>`<div class="sig nt"><strong>${BYID[g.id].fa} · ${HZ[g.h]}:</strong> فاصله تا تغییر سیگنال به ${g.state?"فروش":"خرید"} فقط ${pct(Math.abs(g.gap)*100,2)} است. ${VERD[g.verdict]}</div>`).join("");
@@ -870,6 +887,7 @@ async function loadStatic(){
       const h=[]; for(let i=0;i+1<x.hist.length;i+=2) h.push({d:dayStr(x.hist[i]),c:x.hist[i+1]}); S.hist[a.id]=h;
       S.daily[a.id]=x.daily.map(b=>({d:b[0],o:b[3],h:b[1],l:b[2],c:b[3]})); delete S.errs["daily:"+a.id]; }
     for(const name of ["house","macro"]) for(const k of FREDKEYS[name]){ const o=j.fred&&j.fred[k]; if(o) { S[name][k]=o.map(v=>({d:v[0],v:v[1]})); delete S.errs[name+":"+k]; } else S.errs[name+":"+k]="بدون داده"; }
+    memo.clear(); planMemo.clear();
     S.stamps.daily=j.stamp*1000; $("notice").hidden=true;
   }catch(e){ showNotice("<strong>فایل داده خوانده نشد.</strong><div>چند دقیقه بعد «تازه‌سازی داده» را بزنید. ("+esc(e.message)+")</div>", true); }
   $("refresh").disabled=false; render(); stamp();
