@@ -1,1 +1,653 @@
-{"version":1,"books":{}}
+{
+  "version": 1,
+  "books": {
+    "gold/short": {
+      "id": "gold",
+      "horizon": "short",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 3515.4,
+          "side": "sell",
+          "grade": 1,
+          "rule": "10/30"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 3515.4
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "gold/medium": {
+      "id": "gold",
+      "horizon": "medium",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 3515.4,
+          "side": "sell",
+          "grade": 2,
+          "rule": "50/150"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 3515.4
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "gold/long": {
+      "id": "gold",
+      "horizon": "long",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 3515.4,
+          "side": "sell",
+          "grade": 1,
+          "rule": "1/8"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 3515.4
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "silver/short": {
+      "id": "silver",
+      "horizon": "short",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 41.035,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "10/30"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 41.035
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "silver/medium": {
+      "id": "silver",
+      "horizon": "medium",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 41.035,
+          "side": "sell",
+          "grade": 1,
+          "rule": "50/200"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 41.035
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "silver/long": {
+      "id": "silver",
+      "horizon": "long",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 41.035,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "1/12"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 41.035
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "dxy/short": {
+      "id": "dxy",
+      "horizon": "short",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 103.81,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "10/50"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 103.81
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "dxy/medium": {
+      "id": "dxy",
+      "horizon": "medium",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 103.81,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "50/150"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 103.81
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "dxy/long": {
+      "id": "dxy",
+      "horizon": "long",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 103.81,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "1/8"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 103.81
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "oil/short": {
+      "id": "oil",
+      "horizon": "short",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 92.57,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "10/30"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 92.57
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "oil/medium": {
+      "id": "oil",
+      "horizon": "medium",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 92.57,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "20/100"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 92.57
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "oil/long": {
+      "id": "oil",
+      "horizon": "long",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 92.57,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "1/8"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 92.57
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "btc/short": {
+      "id": "btc",
+      "horizon": "short",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-21",
+          "price": 59879.4,
+          "side": "sell",
+          "grade": 2,
+          "rule": "5/20"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-21",
+        "c": 59879.4
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "btc/medium": {
+      "id": "btc",
+      "horizon": "medium",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-21",
+          "price": 59879.4,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "20/100"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-21",
+        "c": 59879.4
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "btc/long": {
+      "id": "btc",
+      "horizon": "long",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-21",
+          "price": 59879.4,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "1/10"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-21",
+        "c": 59879.4
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "eth/short": {
+      "id": "eth",
+      "horizon": "short",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-21",
+          "price": 1678.72,
+          "side": "sell",
+          "grade": 2,
+          "rule": "5/20"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-21",
+        "c": 1678.72
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "eth/medium": {
+      "id": "eth",
+      "horizon": "medium",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-21",
+          "price": 1678.72,
+          "side": "sell",
+          "grade": 2,
+          "rule": "20/100"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-21",
+        "c": 1678.72
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "eth/long": {
+      "id": "eth",
+      "horizon": "long",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-21",
+          "price": 1678.72,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "1/8"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-21",
+        "c": 1678.72
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "spx/short": {
+      "id": "spx",
+      "horizon": "short",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 6910.39,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "10/50"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 6910.39
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "spx/medium": {
+      "id": "spx",
+      "horizon": "medium",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 6910.39,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "20/100"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 6910.39
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "spx/long": {
+      "id": "spx",
+      "horizon": "long",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 6910.39,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "1/8"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 6910.39
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "ndx/short": {
+      "id": "ndx",
+      "horizon": "short",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 22617.7,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "10/50"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 22617.7
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "ndx/medium": {
+      "id": "ndx",
+      "horizon": "medium",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 22617.7,
+          "side": "neutral",
+          "grade": 0,
+          "rule": "50/150"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 22617.7
+      },
+      "net": 0,
+      "hold": 0
+    },
+    "ndx/long": {
+      "id": "ndx",
+      "horizon": "long",
+      "source": "yahoo",
+      "cash": 100,
+      "units": 0,
+      "holdUnits": 0,
+      "fees": 0,
+      "signals": [
+        {
+          "time": "2026-11-21T16:36:06.332Z",
+          "date": "2026-11-20",
+          "price": 22617.7,
+          "side": "sell",
+          "grade": 1,
+          "rule": "1/8"
+        }
+      ],
+      "fills": [],
+      "lastDay": null,
+      "mark": {
+        "d": "2026-11-20",
+        "c": 22617.7
+      },
+      "net": 0,
+      "hold": 0
+    }
+  }
+}
