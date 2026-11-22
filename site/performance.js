@@ -17,35 +17,56 @@ function renderLedger(ledger){
   document.getElementById("performance").innerHTML=table(["بازار","افق","آخرین سیگنال","آخرین قیمت و تاریخ","تعداد اجرا","کارمزد (واحد)","سود/زیان خالص","نگهداری","اختلاف (واحد درصد)"],rows);
   document.getElementById("journal").innerHTML=table(["زمان ثبت (UTC) / روز اجرا","بازار","افق","رویداد","جهت","تاریخ قیمت","قیمت","کارمزد","قاعده / زمان سیگنال"],history.sort((a,b)=>b[0].localeCompare(a[0])));
 }
-function wireRefresh(load){
-  const button=document.getElementById("refresh"), status=document.getElementById("refresh-status");
-  let token="";
-  button.onclick=async()=>{
-    button.disabled=true;
+const liveQuotes=new Map();
+const quoteErrors=new Set();
+const quoteSymbols={gold:"COMEX:GC1!",silver:"COMEX:SI1!",dxy:"TVC:DXY",oil:"ICEEUR:BRN1!",spx:"SP:SPX",ndx:"NASDAQ:IXIC",tnx:"TVC:US10Y",btc:"COINBASE:BTCUSD",eth:"COINBASE:ETHUSD"};
+const quoteNumber=new Intl.NumberFormat("en-US",{maximumSignificantDigits:7});
+const quoteTime=new Intl.DateTimeFormat("fa-IR",{timeZone:"Asia/Tehran",dateStyle:"short",timeStyle:"short"});
+async function quoteJSON(url){
+  const response=await fetch(url,{cache:"no-store",credentials:"omit",signal:AbortSignal.timeout(9000)});
+  if(!response.ok)throw Error("HTTP "+response.status);
+  return response.json();
+}
+function checkedQuote(price,time,source){
+  if(!Number.isFinite(price)||price<=0||!Number.isFinite(time)||time<=0)throw Error("Incomplete quote");
+  return {price,time,source};
+}
+async function marketQuote(id){
+  if(id==="btc"||id==="eth"){
     try{
-      await load();
-      button.disabled=true;
-      if(!token){
-        const dialog=document.getElementById("refresh-auth"), field=document.getElementById("refresh-token");
-        dialog.returnValue="";
-        const closed=new Promise(resolve=>dialog.addEventListener("close",resolve,{once:true}));
-        dialog.showModal(); await closed;
-        if(dialog.returnValue==="start")token=field.value.trim();
-        field.value="";
-      }
-      if(!token){status.textContent="آخرین نسخهٔ منتشرشده درخواست شد؛ اجرای جدید شروع نشد.";return}
-      const api="https://api.github.com/repos/sepahvandi-sys/markets-dashboard/actions/workflows/update.yml";
-      const before=(await (await fetch("data.json?t="+Date.now(),{cache:"no-store"})).json()).stamp;
-      const r=await fetch(api+"/dispatches",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({ref:"main"})});
-      if(!r.ok){token="";throw Error("GitHub "+r.status)}
-      status.textContent="درخواست دریافت از منابع ثبت شد؛ در انتظار انتشار GitHub…";
-      for(let i=0;i<90;i++){
-        await new Promise(resolve=>setTimeout(resolve,8000));
-        const snapshot=await (await fetch("data.json?t="+Date.now(),{cache:"no-store"})).json();
-        if(snapshot.stamp>before){await load();status.textContent="دادهٔ تازه دریافت شد"+(snapshot.errors?.length?"؛ خطای منبع برای "+snapshot.errors.length+" سری":"");return}
-      }
-      status.textContent="انتشار هنوز تأیید نشده است؛ وضعیت را در GitHub Actions ببینید.";
-    }catch(e){status.textContent="تازه‌سازی کامل نشد · "+e.message}
-    finally{button.disabled=false}
+      const pair=id==="btc"?"BTC-USD":"ETH-USD";
+      const q=await quoteJSON("https://api.exchange.coinbase.com/products/"+pair+"/ticker");
+      return checkedQuote(Number(q.price),Date.parse(q.time),"Coinbase · زمان معامله");
+    }catch{/* Try the same Coinbase instrument through the scanner. */}
+  }
+  const params=new URLSearchParams({symbol:quoteSymbols[id],fields:"close,time,update_mode",_t:String(Date.now())});
+  const q=await quoteJSON("https://scanner.tradingview.com/symbol?"+params);
+  const delay=/delayed_streaming_(\d+)/.exec(q.update_mode||"");
+  const label="TradingView"+(delay?" · تأخیر "+Number(delay[1])/60+" دقیقه":"")+" · تاریخ کندل";
+  return checkedQuote(q.close,q.time*1000,label);
+}
+function quoteDisplay(id,previous,date){
+  const live=liveQuotes.get(id);
+  const value=live?.price??previous;
+  const price=value==null?"—":quoteNumber.format(value);
+  const label=live?live.source+" "+(live.source.includes("کندل")?new Date(live.time).toLocaleDateString("fa-IR",{timeZone:"UTC"}):quoteTime.format(live.time)):"پایانی ثبت‌شده "+(date||"");
+  return '<span class="num">'+price+'</span><div class="sub">'+label+(quoteErrors.has(id)?" · دریافت تازه ناموفق":"")+'</div>';
+}
+function wireRefresh(assets,redraw){
+  const button=document.getElementById("refresh"),status=document.getElementById("refresh-status");
+  button.onclick=async()=>{
+    if(button.disabled)return;
+    button.disabled=true;
+    status.textContent="در حال دریافت مستقیم قیمت‌ها…";
+    const failed=[];
+    try{
+      await Promise.all(assets.map(async asset=>{
+        try{liveQuotes.set(asset.id,await marketQuote(asset.id));quoteErrors.delete(asset.id)}
+        catch{quoteErrors.add(asset.id);failed.push(asset.fa)}
+        redraw();
+      }));
+      const time=new Date().toLocaleTimeString("fa-IR",{timeZone:"Asia/Tehran"});
+      status.textContent="دریافت مستقیم "+(assets.length-failed.length)+" از "+assets.length+" بازار · "+time+" تهران"+(failed.length?" · ناموفق: "+failed.join("، "):"");
+    }finally{button.disabled=false}
   };
 }

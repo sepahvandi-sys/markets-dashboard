@@ -106,16 +106,11 @@ svg{direction:ltr}
     </div>
     <div class="status">
       <span id="stamp" class="sub">در حال آماده‌سازی…</span>
-      <span id="refresh-status" role="status"></span><button id="refresh" type="button">تازه‌سازی داده</button>
+      <span id="refresh-status" role="status"></span><button id="refresh" type="button">به‌روزرسانی قیمت‌ها</button>
     </div>
   </header>
 
-  <dialog id="refresh-auth"><form method="dialog">
-<h2>دریافت تازه از منابع</h2><p>GitHub برای شروع اجرای جدید به احراز هویت نیاز دارد. توکن محدود به همین مخزن با مجوز Actions: write فقط به api.github.com فرستاده می‌شود و تا بسته‌شدن تب در حافظه می‌ماند.</p>
-<label>توکن GitHub <input type="password" id="refresh-token" autocomplete="off"></label>
-<button value="start">شروع دریافت</button><button value="cancel">بستن</button>
-<a href="https://github.com/sepahvandi-sys/markets-dashboard/actions/workflows/update.yml" target="_blank" rel="noopener">اجرای دستی در GitHub</a>
-</form></dialog>
+
 <div id="notice" hidden></div>
 
   <section id="s-summary">
@@ -230,7 +225,7 @@ svg{direction:ltr}
 </div>
 
 <script src="signal-engine.js"></script>
-<script src="performance.js"></script>
+<script src="performance.js?v=direct1"></script>
 <script>
 (() => {
 "use strict";
@@ -645,7 +640,7 @@ function errorCopy(e){
 }
 let loading=false;
 async function loadAll(force){
-  if(loading)return; loading=true; $("refresh").disabled=true; $("stamp").textContent="در حال دریافت داده…";
+  if(loading)return; loading=true; $("stamp").textContent="در حال دریافت داده…";
   const names=["daily","house","macro","hist"]; const errs=[]; delete S.errs.hist;
   await Promise.all(names.map(async n=>{
     try{ if(n==="hist") await loadHist(); else await runBatch(n, force && n==="daily"); }
@@ -664,16 +659,16 @@ function stamp(){ const t=S.stamps.daily; $("stamp").innerHTML = t? `آخرین 
 /* ---------- render: summary ---------- */
 function renderSummary(){
   const rows=ASSETS.map(a=>{
-    const d=S.daily[a.id]; if(!d||!d.length) return `<tr><td class="name">${a.fa}</td><td colspan="9" class="muted">${S.errs["daily:"+a.id]?"داده این بازار نرسید":"در حال بارگذاری…"}</td></tr>`;
+    const d=S.daily[a.id]; if(!d||!d.length) return `<tr><td class="name">${a.fa}</td><td>${quoteDisplay(a.id,null,null)}</td><td colspan="8" class="muted">${S.errs["daily:"+a.id]?"داده این بازار نرسید":"در حال بارگذاری…"}</td></tr>`;
     const A={short:analyze(a.id,"short"),medium:analyze(a.id,"medium"),long:analyze(a.id,"long")};
     const M=A.medium||A.short; const p=d[d.length-1].c;
     return `<tr class="row ${S.asset===a.id?"sel":""}" tabindex="0" data-id="${a.id}">
       <td class="name">${a.fa}<div class="sub" style="font-weight:400">${a.unit}</div></td>
-      <td>${fmt(p)}</td><td>${pct(chg(d,1))}</td><td>${pct(chg(d,a.crypto?7:5))}</td><td>${pct(chg(d,a.crypto?30:21))}</td>
+      <td>${quoteDisplay(a.id,p,d.at(-1).d)}</td><td>${pct(chg(d,1))}</td><td>${pct(chg(d,a.crypto?7:5))}</td><td>${pct(chg(d,a.crypto?30:21))}</td>
       <td>${A.short?trendPill(A.short.score):"—"}</td><td>${A.medium?trendPill(A.medium.score):"—"}</td><td>${A.long?trendPill(A.long.score):'<span class="muted">…</span>'}</td>
       <td>${M&&M.sup[0]?fmt(M.sup[0].level):"—"}</td><td>${M&&M.res[0]?fmt(M.res[0].level):"—"}</td></tr>`;
   }).join("");
-  $("summary").innerHTML=`<thead><tr><th>بازار</th><th>آخرین قیمت</th><th>روز</th><th>هفته</th><th>ماه</th><th>روند کوتاه</th><th>روند میان</th><th>روند بلند</th><th>نزدیک‌ترین کف</th><th>نزدیک‌ترین سقف</th></tr></thead><tbody>${rows}</tbody>`;
+  $("summary").innerHTML=`<thead><tr><th>بازار</th><th>آخرین قیمت</th><th>روز (پایانی)</th><th>هفته (پایانی)</th><th>ماه (پایانی)</th><th>روند کوتاه</th><th>روند میان</th><th>روند بلند</th><th>نزدیک‌ترین کف</th><th>نزدیک‌ترین سقف</th></tr></thead><tbody>${rows}</tbody>`;
   $("summary").querySelectorAll("tr.row").forEach(tr=>{ const go=()=>{S.asset=tr.dataset.id;render();$("s-detail").scrollIntoView({behavior:"smooth",block:"start"});};
     tr.onclick=go; tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}}; });
 }
@@ -717,7 +712,7 @@ function renderDetail(){
   $("side").innerHTML=`
     <div class="card"><div class="kv"><span>روند ${HZ[S.hz]}</span>${trendPill(A.score)}</div>
       <div class="sub">${HZ_DESC[S.hz]}</div>
-      <div class="kv"><span>قیمت</span>${fmt(A.price)}</div>
+      <div class="kv"><span>آخرین قیمت منبع</span><div>${quoteDisplay(a.id,A.price,A.b.at(-1).d)}</div></div>
       <div class="kv"><span>شیب روند (سالانه‌شده)</span>${pct(A.annual,0)}</div>
       <div class="kv"><span>کیفیت روند (R²)</span><span class="num">${A.r2.toFixed(2)}</span></div>
       <div class="kv"><span>جایگاه در دامنه دوره</span><span class="num">${Math.round(A.pos*100)}%</span></div>
@@ -833,7 +828,7 @@ function render(){ try{rebuild();renderSummary();renderSignals();renderCycle();r
 
 render();
 async function loadStatic(){
-  $("refresh").disabled=true; $("stamp").textContent="در حال دریافت داده…";
+  $("stamp").textContent="در حال دریافت داده…";
   try{
     const r=await fetch("data.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status); const j=await r.json();
     for(const a of ASSETS){ const x=j.assets&&j.assets[a.id]; if(!x){ S.errs["daily:"+a.id]="بدون داده"; continue; }
@@ -844,9 +839,9 @@ async function loadStatic(){
     memo.clear(); planMemo.clear(); fwdMemo.clear(); lagMemo.clear();
     S.stamps.daily=j.stamp*1000; $("notice").hidden=true;
   }catch(e){ showNotice("<strong>فایل داده خوانده نشد.</strong><div>چند دقیقه بعد «تازه‌سازی داده» را بزنید. ("+esc(e.message)+")</div>", true); }
-  $("refresh").disabled=false; render(); stamp();
+  render(); stamp();
 }
-wireRefresh(loadStatic);
+wireRefresh(ASSETS,()=>{renderSummary();renderDetail()});
 loadStatic(); setInterval(stamp,60000); setInterval(()=>{if(!$("refresh").disabled)loadStatic()},15*60000);
 // test hook for local checks only
 window.__mkt={S,analyze,render,bars};
