@@ -7,7 +7,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.02756014124917237,
       "fees": 0,
       "signals": [
         {
@@ -20,13 +20,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 3644.1
+        "c": 3624.8
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "gold/medium": {
       "id": "gold",
@@ -34,7 +34,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.02756014124917237,
       "fees": 0,
       "signals": [
         {
@@ -55,13 +55,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 3644.1
+        "c": 3624.8
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "gold/long": {
       "id": "gold",
@@ -69,7 +69,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.02756014124917237,
       "fees": 0,
       "signals": [
         {
@@ -82,13 +82,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 3644.1
+        "c": 3624.8
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "silver/short": {
       "id": "silver",
@@ -96,7 +96,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 2.3575221238938053,
       "fees": 0,
       "signals": [
         {
@@ -109,13 +109,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 43.015
+        "c": 42.375
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "silver/medium": {
       "id": "silver",
@@ -123,7 +123,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 2.3575221238938053,
       "fees": 0,
       "signals": [
         {
@@ -144,13 +144,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 43.015
+        "c": 42.375
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "silver/long": {
       "id": "silver",
@@ -158,7 +158,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 2.3575221238938053,
       "fees": 0,
       "signals": [
         {
@@ -171,13 +171,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 43.015
+        "c": 42.375
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "dxy/short": {
       "id": "dxy",
@@ -185,7 +185,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.9579793252910378,
       "fees": 0,
       "signals": [
         {
@@ -198,13 +198,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 104.319
+        "c": 104.282
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "dxy/medium": {
       "id": "dxy",
@@ -212,7 +212,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.9579793252910378,
       "fees": 0,
       "signals": [
         {
@@ -225,13 +225,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 104.319
+        "c": 104.282
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "dxy/long": {
       "id": "dxy",
@@ -239,7 +239,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.9579793252910378,
       "fees": 0,
       "signals": [
         {
@@ -252,13 +252,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 104.319
+        "c": 104.282
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "oil/short": {
       "id": "oil",
@@ -266,7 +266,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 1.1583951762523192,
       "fees": 0,
       "signals": [
         {
@@ -279,13 +279,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 86.49
+        "c": 86.24
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "oil/medium": {
       "id": "oil",
@@ -293,7 +293,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 1.1583951762523192,
       "fees": 0,
       "signals": [
         {
@@ -306,13 +306,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 86.49
+        "c": 86.24
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "oil/long": {
       "id": "oil",
@@ -320,7 +320,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 1.1583951762523192,
       "fees": 0,
       "signals": [
         {
@@ -333,13 +333,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 86.49
+        "c": 86.24
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "btc/short": {
       "id": "btc",
@@ -362,11 +362,11 @@
       "fills": [],
       "lastDay": "2026-11-22",
       "mark": {
-        "d": "2026-11-23",
-        "c": 61095.8
+        "d": "2026-11-24",
+        "c": 60481.4
       },
       "net": 0,
-      "hold": -0.20796574337944662
+      "hold": -1.2115081447764027
     },
     "btc/medium": {
       "id": "btc",
@@ -389,11 +389,11 @@
       "fills": [],
       "lastDay": "2026-11-22",
       "mark": {
-        "d": "2026-11-23",
-        "c": 61095.8
+        "d": "2026-11-24",
+        "c": 60481.4
       },
       "net": 0,
-      "hold": -0.20796574337944662
+      "hold": -1.2115081447764027
     },
     "btc/long": {
       "id": "btc",
@@ -416,11 +416,11 @@
       "fills": [],
       "lastDay": "2026-11-22",
       "mark": {
-        "d": "2026-11-23",
-        "c": 61095.8
+        "d": "2026-11-24",
+        "c": 60481.4
       },
       "net": 0,
-      "hold": -0.20796574337944662
+      "hold": -1.2115081447764027
     },
     "eth/short": {
       "id": "eth",
@@ -443,11 +443,11 @@
       "fills": [],
       "lastDay": "2026-11-22",
       "mark": {
-        "d": "2026-11-23",
-        "c": 1726.02
+        "d": "2026-11-24",
+        "c": 1702.82
       },
       "net": 0,
-      "hold": 0.18674204569224173
+      "hold": -1.1599007599879059
     },
     "eth/medium": {
       "id": "eth",
@@ -470,11 +470,11 @@
       "fills": [],
       "lastDay": "2026-11-22",
       "mark": {
-        "d": "2026-11-23",
-        "c": 1726.02
+        "d": "2026-11-24",
+        "c": 1702.82
       },
       "net": 0,
-      "hold": 0.18674204569224173
+      "hold": -1.1599007599879059
     },
     "eth/long": {
       "id": "eth",
@@ -497,11 +497,11 @@
       "fills": [],
       "lastDay": "2026-11-22",
       "mark": {
-        "d": "2026-11-23",
-        "c": 1726.02
+        "d": "2026-11-24",
+        "c": 1702.82
       },
       "net": 0,
-      "hold": 0.18674204569224173
+      "hold": -1.1599007599879059
     },
     "spx/short": {
       "id": "spx",
@@ -509,7 +509,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.013803738201534578,
       "fees": 0,
       "signals": [
         {
@@ -522,13 +522,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 7234.85
+        "c": 7237.17
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "spx/medium": {
       "id": "spx",
@@ -536,7 +536,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.013803738201534578,
       "fees": 0,
       "signals": [
         {
@@ -549,13 +549,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 7234.85
+        "c": 7237.17
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "spx/long": {
       "id": "spx",
@@ -563,7 +563,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.013803738201534578,
       "fees": 0,
       "signals": [
         {
@@ -576,13 +576,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 7234.85
+        "c": 7237.17
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "ndx/short": {
       "id": "ndx",
@@ -590,7 +590,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.0041470178002125406,
       "fees": 0,
       "signals": [
         {
@@ -603,13 +603,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 24049.8
+        "c": 24089.6
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "ndx/medium": {
       "id": "ndx",
@@ -617,7 +617,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.0041470178002125406,
       "fees": 0,
       "signals": [
         {
@@ -630,13 +630,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 24049.8
+        "c": 24089.6
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     },
     "ndx/long": {
       "id": "ndx",
@@ -644,7 +644,7 @@
       "source": "yahoo",
       "cash": 100,
       "units": 0,
-      "holdUnits": 0,
+      "holdUnits": 0.0041470178002125406,
       "fees": 0,
       "signals": [
         {
@@ -657,13 +657,13 @@
         }
       ],
       "fills": [],
-      "lastDay": null,
+      "lastDay": "2026-11-23",
       "mark": {
         "d": "2026-11-23",
-        "c": 24049.8
+        "c": 24089.6
       },
       "net": 0,
-      "hold": 0
+      "hold": -0.09999999999999432
     }
   }
 }
